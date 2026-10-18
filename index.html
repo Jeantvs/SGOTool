@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SGO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#ececea;--card:#fff;--ink:#1d1d1f;--mute:#66666b;--line:#c4c4c8;
+  --panel:#d9d9d9;--panel2:#e9e9e9;--field:#fff;
+  --new:#1f6feb;--adj:#b7791f;--done:#77777c;--ok:#2e7d32;--warn:#b7791f;--bad:#c62828;
+  box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){--bg:#151517;--card:#1f1f22;--ink:#ececee;--mute:#9b9ba2;--line:#3b3b41;--panel:#3a3a3e;--panel2:#2c2c30;--field:#202023;--new:#5b9bff;--adj:#e0a93b;--done:#9b9ba2;--ok:#6fcf74;--warn:#e0a93b;--bad:#ef6b6b}
+}
+:root[data-theme="dark"]{--bg:#151517;--card:#1f1f22;--ink:#ececee;--mute:#9b9ba2;--line:#3b3b41;--panel:#3a3a3e;--panel2:#2c2c30;--field:#202023;--new:#5b9bff;--adj:#e0a93b;--done:#9b9ba2;--ok:#6fcf74;--warn:#e0a93b;--bad:#ef6b6b}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:14px/1.45 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+button{font:inherit;color:inherit;cursor:pointer}
+header.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 16px;display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+header.top h1{font-size:16px;margin:0;font-weight:600}
+header.top small{color:var(--mute)}
+.tabs{display:flex;gap:4px}
+.tabs button{border:1px solid var(--line);background:transparent;padding:5px 12px;border-radius:6px}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.role{margin-left:auto;display:flex;gap:8px;align-items:center;color:var(--mute)}
+.role select{font:inherit;padding:5px 8px;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+.legend{display:flex;gap:12px;color:var(--mute);font-size:12px;align-items:center}
+.dot{flex:none;display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--done);margin-right:5px;vertical-align:baseline}
+.dot.novo{background:var(--new)}.dot.ajuste{background:var(--adj)}.dot.feito{background:var(--done)}
+
+.layout{display:grid;grid-template-columns:250px minmax(0,1fr);gap:16px;padding:16px;align-items:start}
+.index{position:sticky;top:calc(64px + env(safe-area-inset-top,0px));max-height:calc(100vh - 90px);overflow:auto;padding-right:4px}
+.index h3{font-size:12px;color:var(--mute);margin:14px 0 4px;font-weight:600}
+.index h3:first-child,.index .only+h3{margin-top:0}
+.index .only{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--mute);margin-bottom:10px;cursor:pointer}
+.index button{display:flex;width:100%;text-align:left;gap:4px;border:0;background:transparent;padding:4px 8px;border-radius:5px;font-size:13px;align-items:baseline}
+.index button:hover{background:var(--panel2)}
+.index button[aria-current="true"]{background:var(--ink);color:var(--bg)}
+.index button[aria-current="true"] .dot{outline:1px solid var(--bg)}
+.stage{overflow-x:auto;padding-bottom:6px}
+.info{margin-top:14px;display:grid;gap:10px;max-width:980px}
+.info .ttl{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center}
+.info h2{margin:0;font-size:17px;font-weight:600}
+.tag{display:inline-block;font-size:11px;padding:1px 8px;border-radius:10px;border:1px solid var(--line);color:var(--mute)}
+.tag.rf{border-color:var(--new);color:var(--new)}
+.tag.warn{border-color:var(--bad);color:var(--bad)}
+.st{font-size:12px;display:inline-flex;align-items:center}
+.info p{margin:0;color:var(--mute);max-width:80ch}
+.info ul{margin:0;padding-left:18px;color:var(--mute);max-width:80ch}
+.go{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.go button{border:1px solid var(--line);background:var(--card);border-radius:6px;padding:3px 10px;font-size:12px}
+.pn{display:flex;gap:8px}
+.pn button{border:1px solid var(--line);background:var(--card);border-radius:6px;padding:5px 12px}
+
+/* ---------- wireframe ---------- */
+.wf{display:flex;width:980px;min-height:560px;background:var(--panel);border-radius:10px;font-size:12px;line-height:1.35;color:var(--ink);position:relative;overflow:hidden}
+.wf.plain{align-items:center;justify-content:center;padding:28px;gap:28px}
+.side{width:156px;flex:none;background:var(--panel2);padding:12px 8px;display:flex;flex-direction:column;gap:2px}
+.side .brand{height:34px;margin:0 0 8px;border:1px dashed var(--mute);display:grid;place-items:center;color:var(--mute);font-size:10px;border-radius:4px}
+.side button{display:flex;gap:8px;align-items:center;border:0;background:transparent;padding:6px 8px;border-radius:6px;text-align:left;font-size:11px}
+.side button.on{background:var(--field);font-weight:600}
+.side button svg{width:15px;height:15px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.side .sp{flex:1}
+.side .who{font-size:10px;color:var(--mute);padding:4px 8px}
+.main{flex:1;padding:16px 18px;min-width:0}
+.h{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.h h2{margin:0;font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:.02em;flex:1}
+.bar{display:flex;gap:8px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.bar .grow{flex:1}
+.b{background:var(--field);color:var(--ink);border:1px solid transparent;border-radius:14px;height:27px;padding:0 14px;font-size:11px;text-transform:uppercase;white-space:nowrap}
+.b:hover{border-color:var(--ink)}
+.b.pri{background:var(--ink);color:var(--bg)}
+.b.bad{color:var(--bad);border-color:var(--bad)}
+.b.big{height:44px;font-size:13px;padding:0 24px;border-radius:22px}
+.b.off{opacity:.45;pointer-events:none}
+.b.ghost{background:transparent;border-color:var(--mute)}
+.f{display:flex;flex-direction:column;gap:3px;min-width:0}
+.f>span{font-size:10px;text-transform:uppercase;color:var(--mute)}
+.f.inl{flex-direction:row;align-items:center;gap:8px}
+.in{background:var(--field);border-radius:5px;min-height:26px;padding:5px 8px;color:var(--mute);display:flex;align-items:center;justify-content:space-between;gap:6px;overflow:hidden}
+.in.ta{align-items:flex-start}
+.in.v{color:var(--ink)}
+.chev{width:7px;height:7px;border-right:1.5px solid var(--mute);border-bottom:1.5px solid var(--mute);transform:rotate(45deg);margin-right:2px;flex:none}
+.g{display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));gap:10px 12px;margin-bottom:10px}
+.s2{grid-column:span 2}.s3{grid-column:span 3}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row.end{justify-content:flex-end}
+.row.sb{justify-content:space-between}
+.box{background:var(--panel2);border-radius:8px;padding:10px 12px;margin-bottom:10px}
+.box.w{background:var(--field)}
+.box h4{margin:0 0 8px;font-size:11px;text-transform:uppercase;font-weight:600}
+table.t{width:100%;border-collapse:collapse;background:var(--panel2);border-radius:8px;overflow:hidden;margin-bottom:10px}
+.t th{text-align:left;font-size:10px;text-transform:uppercase;padding:7px 8px;border-bottom:1px solid var(--line);font-weight:600;white-space:nowrap}
+.t td{padding:6px 8px;border-bottom:1px solid color-mix(in srgb,var(--line) 60%,transparent)}
+.t tr:last-child td{border-bottom:0}
+.t tr[data-go]{cursor:pointer}.t tr[data-go]:hover td{background:var(--field)}
+.t td.r,.t th.r{text-align:right}
+.chip{display:inline-block;padding:1px 8px;border-radius:10px;font-size:10px;background:var(--field);white-space:nowrap}
+.chip.ok{background:color-mix(in srgb,var(--ok) 25%,var(--field))}
+.chip.warn{background:color-mix(in srgb,var(--warn) 28%,var(--field))}
+.chip.bad{background:color-mix(in srgb,var(--bad) 25%,var(--field))}
+.chip.info{background:color-mix(in srgb,var(--new) 22%,var(--field))}
+.note{border-left:3px solid var(--mute);padding:6px 10px;background:var(--panel2);border-radius:0 6px 6px 0;margin-bottom:10px;color:var(--mute)}
+.note.bad{border-color:var(--bad);color:var(--ink)}
+.note.ok{border-color:var(--ok);color:var(--ink)}
+.note.warn{border-color:var(--warn);color:var(--ink)}
+.ck{display:flex;gap:7px;align-items:flex-start;margin:4px 0}
+.ck i{width:13px;height:13px;border-radius:3px;background:var(--field);flex:none;margin-top:1px;display:grid;place-items:center;font-style:normal;font-size:10px;line-height:1}
+.ck.rd i{border-radius:50%}
+.ck.on i::after{content:"";width:7px;height:7px;background:var(--ink);border-radius:2px}
+.ck.rd.on i::after{border-radius:50%}
+.seg{display:flex;gap:4px;flex-wrap:wrap}
+.seg span{background:var(--field);padding:4px 10px;border-radius:12px;color:var(--mute)}
+.seg span.on{background:var(--ink);color:var(--bg)}
+.sig{height:96px;border:1.5px dashed var(--mute);border-radius:8px;background:var(--field);position:relative;display:grid;place-items:center;color:var(--mute)}
+.sig svg{position:absolute;inset:0;width:100%;height:100%}
+.px{position:relative;background:var(--panel2);border:1px solid var(--line);display:grid;place-items:center;color:var(--mute);border-radius:6px;overflow:hidden}
+.px::before,.px::after{content:"";position:absolute;left:50%;top:50%;width:150%;height:1px;background:var(--line);transform:translate(-50%,-50%) rotate(var(--a,30deg))}
+.px::after{--a:-30deg;transform:translate(-50%,-50%) rotate(-30deg)}
+.px span{position:relative;z-index:1;background:var(--panel2);padding:0 6px}
+.ph{display:flex;gap:6px;flex-wrap:wrap}
+.ph .px{width:74px;height:56px;font-size:10px}
+.ph .add{width:74px;height:56px;border:1.5px dashed var(--mute);border-radius:6px;display:grid;place-items:center;color:var(--mute);font-size:10px;text-align:center}
+.steps{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.steps span{padding:3px 12px;border-radius:12px;background:var(--panel2);color:var(--mute);font-size:11px}
+.steps span.on{background:var(--ink);color:var(--bg)}
+.steps span.done{background:var(--field);color:var(--ink)}
+.kpi{background:var(--panel2);border-radius:8px;padding:10px 12px}
+.kpi b{display:block;font-size:20px;font-weight:600}
+.kpi span{font-size:10px;text-transform:uppercase;color:var(--mute)}
+.bars{display:grid;gap:7px}
+.bars div{display:grid;grid-template-columns:120px 1fr 70px;gap:8px;align-items:center}
+.bars i{display:block;height:12px;background:var(--ink);border-radius:3px;opacity:.75}
+.bars em{font-style:normal;color:var(--mute);text-align:right}
+.cal{display:grid;grid-template-columns:50px repeat(6,1fr);gap:3px;margin-bottom:10px}
+.cal .hd{font-size:10px;text-transform:uppercase;text-align:center;color:var(--mute);padding:3px 0}
+.cal .hr{font-size:10px;color:var(--mute);padding-top:6px}
+.slot{border-radius:4px;min-height:26px;font-size:10px;display:grid;place-items:center;border:0}
+.slot.free{background:var(--field);color:var(--mute)}
+.slot.free:hover{outline:1.5px solid var(--ink)}
+.slot.busy{background:var(--ink);color:var(--bg);opacity:.8}
+.kan{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.kan>div{background:var(--panel2);border-radius:8px;padding:8px;min-height:260px}
+.kan h5{margin:0 0 8px;font-size:10px;text-transform:uppercase}
+.cardx{background:var(--field);border-radius:6px;padding:8px;margin-bottom:6px;display:block;width:100%;text-align:left;border:1px solid transparent;cursor:pointer}
+.cardx:hover{border-color:var(--ink)}
+.cardx b{display:block;font-weight:600}
+.cardx span{color:var(--mute);font-size:11px}
+.dlg{background:var(--panel2);border-radius:12px;padding:20px 22px;width:460px;max-width:100%;box-shadow:0 0 0 1px var(--line)}
+.dlg h3{margin:0 0 10px;font-size:13px;text-transform:uppercase}
+.dlg.wide{width:600px}
+.car{width:130px;color:var(--ink)}
+.cols{display:grid;grid-template-columns:1.1fr 1fr;gap:12px}
+.cols.e{grid-template-columns:1fr 1fr}
+.cols.l{grid-template-columns:1.6fr 1fr}
+.arrows{display:inline-flex;gap:3px}.arrows span{background:var(--field);border-radius:3px;padding:0 6px}
+.lock{color:var(--bad)}
+.total{display:flex;justify-content:space-between;padding:3px 0}
+.total.big{font-size:14px;font-weight:600;border-top:1px solid var(--line);margin-top:4px;padding-top:7px}
+.wapp{background:color-mix(in srgb,var(--ok) 18%,var(--field));border-radius:10px 10px 10px 2px;padding:10px 12px;max-width:340px}
+.demo{font-size:10px;color:var(--mute);text-decoration:underline;border:0;background:none;padding:0}
+
+/* quadro */
+.board h3{margin:22px 0 10px;font-size:15px}
+.board h3:first-child{margin-top:0}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,380px);gap:14px}
+.mini{border:1px solid var(--line);border-radius:10px;background:var(--card);padding:0;text-align:left;overflow:hidden;display:block;width:100%}
+.mini:hover{border-color:var(--ink)}
+.mini .cap{padding:7px 10px;font-size:12px;display:flex;gap:6px;align-items:center;border-bottom:1px solid var(--line)}
+.mini .view{height:290px;overflow:hidden;position:relative}
+.mini .view .sc{zoom:.385;pointer-events:none;width:980px}
+.cov{border-collapse:collapse;width:100%;max-width:980px}
+.cov th,.cov td{text-align:left;padding:6px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+.cov td button{border:1px solid var(--line);background:var(--card);border-radius:5px;padding:1px 8px;margin:0 4px 4px 0;font-size:12px}
+.sum{display:flex;gap:20px;flex-wrap:wrap;margin:0 0 14px}
+.sum div{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 14px}
+.sum b{font-size:20px;display:block}
+
+body.pres header.top,body.pres .index,body.pres .info{display:none}
+body.pres .layout{display:block;padding:8px 0 0}
+body.pres .stage{display:flex;justify-content:center;align-items:center;min-height:calc(100vh - 64px);overflow:hidden;padding:0}
+.pbar{display:none}
+body.pres .pbar{display:flex;position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));gap:12px;align-items:center;background:var(--bg);border-top:1px solid var(--line);z-index:20}
+.pbar .cap{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pbar .hint{color:var(--mute);font-size:12px}
+.pbar button{border:1px solid var(--line);background:var(--card);border-radius:6px;padding:5px 12px}
+.pres-btn{background:var(--ink);color:var(--bg);border:0;padding:6px 14px;border-radius:6px}
+.kan.k6{grid-template-columns:repeat(6,1fr);gap:6px}
+.kan.k6>div{padding:6px;min-height:300px}
+.kan.k6 h5{font-size:9px;line-height:1.25;min-height:34px}
+.kan.k6 .cardx{padding:6px;font-size:11px}
+.kan.k2{grid-template-columns:repeat(2,1fr)}
+.kan.k2>div{min-height:300px}
+.mine{font-weight:600;color:var(--new)}
+.t tr.sel td{background:var(--field)}
+.kan.k5{grid-template-columns:repeat(5,1fr)}
+.kan.k5>div{min-height:330px}
+.kan.k5 h5{line-height:1.25}
+.cardx.nolink{cursor:default}.cardx.nolink:hover{border-color:transparent}
+.cardx.hl{border-color:var(--ink);border-width:2px}
+.wf.tab{font-size:14px}
+.wf.tab .b{height:42px;font-size:13px;padding:0 20px}
+.wf.tab .cardx{padding:12px}
+.wf.tab .in{min-height:34px}
+.timer{font-size:42px;font-weight:600;letter-spacing:.02em}
+.index .stg{font-size:12px;color:var(--mute);margin:0 0 10px;padding:6px 8px;background:var(--panel2);border-radius:6px}
+.index .stg b{color:var(--ink)}
+@media (max-width:900px){
+  .layout{grid-template-columns:1fr}
+  .index{position:static;max-height:220px}
+  .role{margin-left:0}
+}
+@media (prefers-reduced-motion:no-preference){.stage{scroll-behavior:smooth}}
+
+/* ===== alta fidelidade ===== */
+:root{--bg:#f3f4f6;--card:#fff;--ink:#161a20;--mute:#5a6472;--line:#dde1e6;--panel:#e8ebef;--panel2:#fff;--field:#f3f5f7;--new:#1d4ed8;--ok:#15803d;--warn:#b45309;--bad:#b91c1c;--acc:#c2410c;--accfg:#fff;--side:#161a20}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#101318;--card:#1a1f27;--ink:#eceff3;--mute:#9aa4b2;--line:#2c333d;--panel:#14181e;--panel2:#1d232c;--field:#262d38;--new:#7aa7ff;--ok:#6fcf74;--warn:#e0a93b;--bad:#ef6b6b;--acc:#ff8a4c;--accfg:#1a1208;--side:#0c0e12}}
+:root[data-theme="dark"]{--bg:#101318;--card:#1a1f27;--ink:#eceff3;--mute:#9aa4b2;--line:#2c333d;--panel:#14181e;--panel2:#1d232c;--field:#262d38;--new:#7aa7ff;--ok:#6fcf74;--warn:#e0a93b;--bad:#ef6b6b;--acc:#ff8a4c;--accfg:#1a1208;--side:#0c0e12}
+header.top{background:var(--card)}header.top h1{font-weight:700;font-size:17px}
+.tabs button{border-radius:8px}.tabs button[aria-pressed="true"]{background:var(--acc);border-color:var(--acc);color:var(--accfg)}
+.pres-btn{background:var(--acc);color:var(--accfg);border-radius:8px;font-weight:600}
+.index button[aria-current="true"]{background:var(--acc);color:var(--accfg)}
+.wf{width:1040px;min-height:600px;border-radius:16px;font-size:13px;background:var(--panel);box-shadow:0 8px 30px rgba(16,19,24,.12),0 0 0 1px var(--line)}
+.wf.plain{background:linear-gradient(135deg,#161a20,#3a1d0e)}
+.hero{width:340px;color:#fff;display:flex;flex-direction:column;gap:12px}.hero b{font-size:56px;letter-spacing:-.02em}.hero i{color:#ff8a4c;font-style:normal}.hero span{font-size:18px;color:#c9cfd8}
+.side{width:196px;background:var(--side);padding:16px 10px}
+.side .brand{border:0;height:auto;display:block;text-align:left;color:#fff;font-size:20px;font-weight:700;padding:2px 10px 16px}
+.side button{color:#c9cfd8;font-size:13px;padding:10px 12px;border-radius:8px;gap:10px}.side button:hover{background:#222831}.side button.on{background:#2b323d;color:#fff}
+.side .who{color:#ff8a4c;font-size:11px;padding:4px 12px}
+.main{padding:22px 26px}.h h2{font-size:20px;text-transform:none;letter-spacing:0;font-weight:700}
+.b{border-radius:10px;height:36px;font-size:13px;text-transform:none;font-weight:600;border:1px solid var(--line);background:var(--card)}.b:hover{border-color:var(--acc)}
+.b.pri{background:var(--acc);color:var(--accfg);border-color:var(--acc)}.b.bad{background:transparent}.b.ghost{background:transparent}
+.f>span{font-size:11px;text-transform:none;font-weight:600}
+.in{background:var(--card);border:1px solid var(--line);border-radius:8px;min-height:36px;padding:7px 10px;font:inherit}
+input.in,textarea.in{width:100%;color:var(--ink)}input.in:focus,textarea.in:focus{outline:2px solid var(--acc)}
+.box{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}.box h4{font-size:12px;text-transform:none;color:var(--mute);font-weight:700}
+table.t{background:var(--card);border:1px solid var(--line);border-radius:12px}.t th{font-size:11px;color:var(--mute)}.t td{padding:9px 10px}
+.t tr[data-go]:hover td,.t tr.sel td{background:var(--field)}
+.chip{font-size:11px;font-weight:600;padding:2px 9px}
+.note{background:var(--card);border:1px solid var(--line);border-left-width:4px;border-radius:8px}
+.ck i{width:18px;height:18px;border:1.5px solid var(--mute);background:var(--card)}
+.ck.on i{background:var(--ok);border-color:var(--ok)}.ck.on i::after{width:9px;height:5px;background:none;border-left:2px solid #fff;border-bottom:2px solid #fff;border-radius:0;transform:rotate(-45deg);margin-top:-2px}
+.ck.rd.on i{background:var(--card)}.ck.rd.on i::after{width:8px;height:8px;background:var(--ok);border:0;border-radius:50%;transform:none;margin:0}
+.seg span{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:5px 12px}.seg span.on{background:var(--acc);border-color:var(--acc);color:var(--accfg)}
+.sig{border-color:var(--line);background:var(--card)}
+.px{background:linear-gradient(135deg,#cfd6df,#a9b4c2);border:0;color:#3c4654}.px::before,.px::after{display:none}.px span{background:none;font-size:11px}
+.ph .px,.ph .add{border-radius:8px}.ph .add{border-color:var(--line)}
+.steps span{padding:6px 14px;border-radius:99px;background:var(--card);border:1px solid var(--line);font-size:12px}
+.steps span.on{background:var(--acc);border-color:var(--acc);color:var(--accfg);font-weight:600}
+.steps span.done{background:color-mix(in srgb,var(--ok) 18%,var(--card));border-color:transparent;color:var(--ink)}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px}.kpi b{font-size:26px}.kpi span{text-transform:none;font-size:12px}
+.bars i{background:var(--acc);opacity:1;border-radius:6px;height:14px}
+.kan>div{background:color-mix(in srgb,var(--ink) 5%,var(--panel));border-radius:12px}.kan h5{font-size:11px;text-transform:none;font-weight:700;color:var(--mute)}
+.cardx{background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 1px 2px rgba(16,19,24,.06)}.cardx:hover{border-color:var(--acc)}.cardx.hl{border:2px solid var(--acc)}
+.mine{color:var(--acc)}.timer{color:var(--acc)}
+.wapp{background:color-mix(in srgb,var(--ok) 24%,var(--card));border-radius:12px 12px 12px 2px}
+.arrows span{background:var(--field);border:1px solid var(--line);border-radius:6px}
+.mini .view .sc{width:1040px;zoom:.365}
+#toast{position:fixed;left:50%;bottom:calc(70px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 18px;border-radius:10px;font-size:14px;font-weight:600;z-index:50;opacity:0;pointer-events:none;transition:opacity .2s}#toast.on{opacity:1}
+select.in{width:100%;color:var(--ink)}.ck,.seg span,.sig,.ph .add,.arrows span{cursor:pointer}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>SGO</h1>
+  <div class="tabs" role="group" aria-label="Visualização">
+    <button data-view="proto" aria-pressed="true">Protótipo</button>
+    <button data-view="board" aria-pressed="false">Quadro geral</button>
+    
+  </div>
+  <button class="pres-btn" data-pres="1">▶ Apresentar</button>
+  <label class="role">Perfil simulado
+    <select id="role"></select>
+  </label>
+</header>
+<main id="app"></main><div id="toast" role="status" aria-live="polite"></div>
+<div class="pbar" id="pbar"><button data-tour="-1">◀</button><button data-tour="1">▶</button><span class="cap"></span><span class="hint">← → navegam · Esc sai</span><button data-pres="0">Sair</button></div>
+
+<script>
+/* ============ perfis e hierarquia ============ */
+const ROLES={REC:'Recepção',MEC:'Mecânico',PEC:'Peças e orçamento',CHF:'Chefe de oficina',DIR:'Diretor'};
+const MODS={auth:'Acesso',op:'Operação do dia',cad:'Cadastros',ges:'Gestão'};
+const NAV=[
+ ['quadro','Quadro de OS','home','REC,MEC,PEC,CHF,DIR','quadro'],
+ ['agenda','Agenda','cal','REC,DIR','agenda'],
+ ['contatos','Cliente / Fornecedor','users','REC,PEC,DIR','contatos'],
+ ['estoque','Estoque','box','PEC,DIR','estoque'],
+ ['fila','Fila e liberação','wrench','CHF,DIR','fila'],
+ ['pessoas','Pessoas e acessos','team','CHF,DIR','pessoas'],
+ ['rel','Relatórios','chart','CHF,DIR','relatorios']
+];
+const IC={
+ home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/>',
+ users:'<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/>',
+ cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+ wrench:'<path d="M14 6a4 4 0 0 0 5 5l-9 9-3-3 9-9"/><path d="M14 6l3 3"/>',
+ box:'<path d="M3 7l9-4 9 4v10l-9 4-9-4z"/><path d="M3 7l9 4 9-4M12 11v10"/>',
+ chart:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+ team:'<circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5M15 15c3 0 6 1.5 6 5"/>',
+ exit:'<path d="M10 4H4v16h6M16 8l4 4-4 4M20 12H9"/>'
+};
+/* etapas da OS de exemplo (OS-0187) e quem faz cada uma */
+const ST=['Aguardando inspeção','Em orçamento','Aguardando aprovação','Em serviço','Aguardando liberação do chefe','Pronto para entrega','Entregue'];
+const STK=['warn','info','warn','info','warn','ok','ok'];
+const COL=['Inspeção','Orçamento','Aprovação','Serviço','Liberação do chefe','Entrega'];
+const OWN=['MEC','PEC','REC,PEC','MEC','CHF','REC'];
+const OWNL=['Mecânico','Peças e orçamento','Recepção ou Peças e orçamento','Mecânico','Chefe de oficina','Recepção'];
+let STAGE=0,ROLE='REC',BK=false,DISCO=1,NP=[],PP=[],RUN=true,TM=8073,FIRST=true;
+const UI0={tab:'entrar',cf:'all',cont:'0',agf:'0',est:'none',pf:'0',rel:'prod',mec:'0',extra:'0'};
+let UI={...UI0};
+const can=r=>r.split(',').includes(ROLE);
+
+/* ============ helpers ============ */
+const B=(t,go,c='')=>`<button class="b ${c}" ${go?`data-go="${go}"`:''}>${t}</button>`;
+const BT=(t,o={})=>{const ok=!o.r||can(o.r);return `<button class="b ${o.c||''} ${ok?'':'off'}" ${ok&&o.go?`data-go="${o.go}"`:''} ${ok&&o.set?`data-set="${o.set}"`:''} ${ok?'':'title="Só para: '+o.r.split(',').map(x=>ROLES[x]).join(', ')+'"'}>${ok?'':'🔒 '}${t}</button>`};
+const F=(l,v='',c='')=>`<div class="f ${c}"><span>${l}</span><input class="in ${v?'v':''}" value="${v}"></div>`;
+const OPT={'Cliente':['João Pereira','Maria Souza','Carlos Lima'],'Veículo':['Ford Pampa · LXN-4590','VW Gol · MAB-1C23'],'Unidade':['un','kg','l','cx'],'Função':['Recepção','Mecânico','Peças e orçamento','Chefe de oficina'],'Fornecedor':['Auto Peças Brusque Ltda','Distribuidora Vale'],'Fornecedor habitual':['','Auto Peças Brusque Ltda','Distribuidora Vale']};
+const S=(l,v='',c='')=>`<div class="f ${c}"><span>${l}</span><select class="in">${[...new Set([v,...(OPT[l]||[])])].map(o=>`<option ${o===v?'selected':''}>${o}</option>`).join('')}</select></div>`;
+const TA=(l,v='',h=64,c='')=>`<div class="f ${c}"><span>${l}</span><textarea class="in ta ${v?'v':''}" style="height:${h}px">${v}</textarea></div>`;
+const G=(n,...i)=>`<div class="g" style="--n:${n}">${i.join('')}</div>`;
+const R=(c,...i)=>`<div class="row ${c}">${i.join('')}</div>`;
+const BAR=(hint,...btns)=>`<div class="bar"><div class="f inl grow"><span>Busca</span><input class="in grow" style="flex:1" placeholder="${hint}" data-q="1"></div>${btns.join('')}</div>`;
+const T=(heads,rows,go,attr)=>`<table class="t"><thead><tr>${heads.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map((r,i)=>{const g=Array.isArray(go)?go[i]:go;return `<tr ${g?`data-go="${g}"`:''} ${attr?attr(i):''}>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`}).join('')}</tbody></table>`;
+const X=(t,i,c='')=>`<div class="box ${c}">${t?`<h4>${t}</h4>`:''}${i}</div>`;
+const CK=(t,on)=>`<div class="ck ${on?'on':''}"><i></i><span>${t}</span></div>`;
+const RD=(t,on)=>`<div class="ck rd ${on?'on':''}"><i></i><span>${t}</span></div>`;
+const CH=(t,k='')=>`<span class="chip ${k}">${t}</span>`;
+const NOTE=(t,k='')=>`<div class="note ${k}">${t}</div>`;
+const SEG=(o,on)=>`<div class="seg">${o.map((x,i)=>`<span class="${i===on?'on':''}">${x}</span>`).join('')}</div>`;
+const SEGS=(o,key)=>`<div class="seg">${o.map(([lab,val])=>`<span class="${UI[key]===val?'on':''}" data-set="${key}=${val}" style="cursor:pointer">${lab}</span>`).join('')}</div>`;
+const SIG=(l,signed)=>`<div class="sig">${signed?'<svg viewBox="0 0 400 96" preserveAspectRatio="none"><path d="M40 60 C70 10 90 90 120 40 S170 20 200 58 S260 30 300 50 S340 40 360 30" fill="none" stroke="currentColor" stroke-width="2"/></svg>':''}<span>${l}</span></div>`;
+const PX=(l,h=60,w='100%')=>`<div class="px" style="height:${h}px;width:${w}"><span>${l}</span></div>`;
+const PH=n=>`<div class="ph">${Array.from({length:n},(_,i)=>`<div class="px"><span>foto ${i+1}</span></div>`).join('')}<div class="add">+ FOTO</div></div>`;
+const STEPS=(a,c)=>`<div class="steps">${a.map((s,i)=>`<span class="${i===c?'on':i<c?'done':''}">${s}</span>`).join('')}</div>`;
+const K=(l,v)=>`<div class="kpi"><b>${v}</b><span>${l}</span></div>`;
+const BARS=d=>`<div class="bars">${d.map(([l,p,t])=>`<div><span>${l}</span><i style="width:${p}%"></i><em>${t}</em></div>`).join('')}</div>`;
+const TOT=(l,v,c='')=>`<div class="total ${c}"><span>${l}</span><span>${v}</span></div>`;
+const CARD=(t,sub,go,cls='')=>`<div class="cardx ${go?'':'nolink'} ${cls}" ${go?`data-go="${go}"`:''}><b>${t}</b><span>${sub}</span></div>`;
+
+/* ============ casca ============ */
+let CTX=null;
+const side=()=>`<nav class="side"><div class="brand">SGO</div>${NAV.filter(n=>n[3].includes(ROLE)).map(n=>`<button data-go="${n[4]}" class="${CTX&&CTX.n===n[0]?'on':''}"><svg viewBox="0 0 24 24">${IC[n[2]]}</svg>${n[0]==='quadro'&&ROLE==='MEC'?'Meus serviços':n[1]}</button>`).join('')}<div class="sp"></div><div class="who">${ROLES[ROLE]}</div><button data-go="login"><svg viewBox="0 0 24 24">${IC.exit}</svg>Sair</button></nav>`;
+const shell=(t,b,o={})=>`<div class="wf ${ROLE==='MEC'?'tab':''}">${side()}<section class="main"><div class="h"><h2>${t}</h2>${o.right||''}</div>${b}</section></div>`;
+const plain=b=>`<div class="wf plain">${b}</div>`;
+const SCR=[];
+const D=(id,o,fn)=>SCR.push({id,m:o.m,n:o.n||'',t:o.t,r:(o.r).split(','),fn});
+
+/* ============ 1. Acesso ============ */
+D('login',{m:'auth',t:'Login e primeiro acesso',r:'REC,MEC,PEC,CHF,DIR'},()=>plain(`${'<div class="hero"><b>SGO<i>.</i></b><span>Do pátio à entrega, cada veículo em um só lugar.</span></div>'}<div class="box" style="width:280px;margin:0">${UI.tab==='entrar'?`${F('Usuário')}<div style="height:8px"></div>${F('Senha')}<div class="row" style="margin:8px 0"><span class="demo">Esqueci minha senha</span></div><div class="row">${B('Entrar','quadro','pri')}${FIRST?'<button class="b ghost" data-set="tab=primeiro">Primeiro acesso</button>':''}</div>`:`<b style="font-size:16px">Primeiro acesso</b><div style="height:8px"></div>${F('Usuário')}<div style="height:8px"></div>${F('E-mail')}<div style="height:8px"></div>${F('Senha')}<div style="height:8px"></div>${F('Confirmar senha')}<p style="color:var(--mute);margin:8px 0">Este primeiro cadastro cria o administrador (Diretor) do sistema. Depois dele, o acesso passa a ser definido pelo diretor ou pelo chefe de oficina.</p><div class="row"><button class="b pri" data-set="tab=entrar">Cadastrar</button><button class="b ghost" data-set="tab=entrar">Voltar</button></div>`}</div>`));
+
+/* ============ 2. Quadro de OS ============ */
+D('quadro',{m:'op',n:'quadro',t:'Quadro de OS',r:'REC,MEC,PEC,CHF,DIR'},()=>{
+  const fixed=[[['OS-0188 · Fiat Uno','Pedro Alves','Revisão geral']],[['OS-0186 · Clio','Ana Becker','Freio traseiro']],[['OS-0185 · VW Gol','Maria Souza','Embreagem']],[['OS-0183 · Captiva','Carlos Lima · Rafael','Suspensão']],[],[['OS-0176 · Captiva','Carlos Lima','Troca de óleo']]];
+  const cols=(ROLE==='MEC'?[0,3]:[0,1,2,3,4,5]);
+  const board=cols.map(i=>`<div><h5>${COL[i]} (${fixed[i].length+(STAGE===i?1:0)})${can(OWN[i])?' <span class="mine">· sua vez</span>':''}</h5>${STAGE===i?CARD('OS-0187 · Ford Pampa',ROLE==='MEC'?'Barulho ao frear':'João Pereira · prev. 16/10','os','hl'):''}${fixed[i].map(x=>CARD(x[0],ROLE==='MEC'?x[2]:x[1])).join('')}</div>`).join('');
+  return shell(ROLE==='MEC'?'Meus serviços':'Quadro de ordens de serviço',`<div class="row" style="margin-bottom:10px">${can('REC,DIR')?B('Agenda de hoje (4)','agenda','ghost'):''}${can('PEC,DIR')?B('Peças em falta (3)','estoque','ghost'):''}${STAGE===6?CH('1 entregue hoje','ok'):''}</div><div class="kan ${ROLE==='MEC'?'k2':'k6'}">${board}</div>`,{right:BT('+ Nova OS',{go:'os-nova',r:'REC',c:'pri'})});
+});
+
+/* ============ 3. Receber veículo (nova OS) ============ */
+D('os-nova',{m:'op',n:'quadro',t:'Receber veículo (nova OS)',r:'REC'},()=>shell('Receber veículo · nova OS',
+  `<div class="row" style="margin-bottom:10px"><div class="f inl grow"><span>Placa</span><div class="in v" style="flex:1">LXN-4590</div></div>${B('Buscar','','ghost')}<button class="demo" data-go="agenda">veio de agendamento?</button></div>`+
+  NOTE('Encontrado: <b>Ford Pampa 1995</b> · João Pereira · (47) 99123-4567. <button class="demo" data-go="contatos">Placa nova? Cadastre cliente e veículo</button>','ok')+
+  G(3,F('Quilometragem','148.230 km'),`<div class="f"><span>Combustível</span>${SEG(['Res.','1/4','1/2','3/4','Cheio'],1)}</div>`,`<div class="f"><span>Estado geral</span>${SEG(['Bom','Regular','Ruim'],1)}</div>`)+
+  `<div class="cols e"><div>${TA('Avarias visíveis','Risco no para-choque diant. esq.; amassado na porta tras. dir.',56)}<div style="height:8px"></div>${TA('Reclamação do cliente','Barulho ao frear, pedal baixo.',46)}<div style="height:8px"></div>${F('Previsão de conclusão','16/10/2026')}</div><div class="f"><span>Fotos (mínimo 4)</span>${PH(4)}</div></div>`+
+  X('Termo e assinatura',`<div style="color:var(--mute);margin-bottom:6px">O cliente confirma o estado do veículo, autoriza a desmontagem só para orçamento e sabe que os valores podem mudar. Nada extra é feito sem novo aceite.</div>${CK('Cliente concorda com o termo',true)}${SIG('Assinatura do cliente',true)}`)+
+  R('end',B('Cancelar','quadro'),`<button class="b pri" data-go="os" data-set="STAGE=0;mec=0">Abrir OS</button>`)));
+
+/* ============ 4. OS: ficha única ============ */
+const EV=[['08:20','OS aberta e termo assinado'],['09:05','Mecânico enviou a inspeção'],['10:40','Orçamento enviado no WhatsApp'],['11:30','Cliente aprovou; peças reservadas'],['16:05','Serviço concluído'],['16:20','Chefe liberou o checklist'],['17:10','Veículo entregue']];
+const ITENS=[['Pastilha de freio','1','R$ 210,00'],['Disco de freio','2','R$ 480,00'],['Mão de obra (3,0 h)','','R$ 550,00']];
+function osPanel(){
+  const lock=STAGE<6&&!can(OWN[STAGE])?NOTE(`Esta etapa é de: <b>${OWNL[STAGE]}</b>. Você acompanha, mas não altera.`,'warn'):'';
+  const par=['Freios','Suspensão','Pneus','Elétrica','Fluidos'];
+  switch(STAGE){
+  case 0:return['Etapa 1 · Inspeção do veículo',lock+(UI.mec==='0'?R('',BT('Atribuir para mim',{r:'MEC',set:'mec=1',c:'ghost'}),'<span style="color:var(--mute)">Ninguém pegou este serviço ainda.</span>')+'<div style="height:8px"></div>':'')+
+   `<div class="cols e">${T(['Parte','Situação'],par.map((p,i)=>[p,SEG(['OK','Atenção','Crítico'],[2,0,1,0,1][i])]))}<div>${T(['Tipo','O que precisa','Qtd'],[['Peça','Pastilha de freio','1'],['Peça','Disco de freio','2'],['Serviço','Sistema de freios','3,0 h']])}${R('',B('+ Peça','','ghost'),B('+ Serviço','','ghost'))}</div></div>${X('Fotos e laudo do scanner',PH(3))}${R('end',BT('Enviar ao orçamento',{r:'MEC',set:'STAGE=1',c:'pri'}))}`];
+  case 1:return['Etapa 2 · Montar orçamento',lock+T(['Tipo','Item','Qtd','Valor','Estoque'],[['Peça','Pastilha de freio','1','R$ 210,00',CH('6 em estoque','ok')],['Peça','Disco de freio','2','R$ 480,00',CH('1 em estoque','bad')],['Serviço','Sistema de freios','3,0 h','R$ 550,00','—']])+R('',BT('+ Peça do estoque',{r:'PEC',c:'ghost'}),BT('+ Serviço',{r:'PEC',c:'ghost'}),BT('Pedir preço do disco',{r:'PEC',c:'ghost',go:'estoque',set:'est=preco'}))+
+   `<div class="cols e"><div>${TOT('Peças','R$ 690,00')+TOT('Mão de obra','R$ 550,00')+TOT('Total','R$ 1.240,00','big')}</div><div>${G(2,F('Desconto %','0'),F('Validade (dias)','7'))}<div style="color:var(--mute)">À vista ou PIX: 5% de desconto. Cartão: até 4x.</div></div></div>${R('end',BT('Enviar por WhatsApp',{r:'PEC',set:'STAGE=2',c:'pri'}))}`];
+  case 2:return['Etapa 3 · Aprovação do cliente',lock+`<div class="wapp" style="margin-bottom:8px">Olá, João! O orçamento da sua Pampa ficou em <b>R$ 1.240,00</b>, válido por 7 dias. Veja os itens e as fotos no link e responda <b>APROVO</b> para autorizar.</div>`+X('',RD('Cliente respondeu "APROVO" no WhatsApp (11:28)',true)+RD('Cliente assinou na oficina',false)+SIG('Assinatura do cliente',false))+NOTE('Ao aprovar, as peças saem do estoque para esta OS e o serviço entra na fila do mecânico. Se recusar, o carro é remontado e entregue sem o serviço.')+R('end',BT('Recusar',{r:'REC,PEC',set:'STAGE=4',c:'bad'}),BT('Aprovar e liberar',{r:'REC,PEC',set:'STAGE=3',c:'pri'}))];
+  case 3:return['Etapa 4 · Execução do serviço',lock+`<div class="cols e"><div>${X('Tempo de serviço',`<div class="timer">02:14:33</div><span style="color:var(--mute)">Previsto 3,0 h</span>`)}<div class="row">${BT('Iniciar',{r:'MEC',c:'off'})}${BT(RUN?'Pausar':'Retomar',{r:'MEC'})}${BT('Concluir',{r:'MEC',set:'STAGE=4',c:'pri'})}</div><div style="height:8px"></div>${SEG(['Aguardando peça','Aguardando cliente','Almoço','Outro'],0)}<div style="margin-top:6px;color:var(--mute)">Pausa de mais de 24 horas pede justificativa.</div></div><div>${X('Aprovado pelo cliente',T(['Item','Feito'],[['Pastilha de freio',CK('',true)],['Disco de freio (2)',CK('',true)],['Sistema de freios',CK('',false)]]))}${UI.extra==='1'?X('Item a mais',F('O que é','Fluido de freio DOT 4')+'<div style="height:6px"></div>'+R('end',BT('Cancelar',{set:'extra=0'}),BT('Avisar a recepção',{r:'MEC',set:'extra=0',c:'pri'}))+'<div style="color:var(--mute);margin-top:4px">O cliente precisa aprovar antes do uso.</div>'):BT('Achei algo a mais',{r:'MEC',set:'extra=1',c:'ghost'})}</div></div>`];
+  case 4:return['Etapa 5 · Liberação do checklist de entrega',lock+X('Conferência do chefe',T(['Item','Resultado'],[['Itens do orçamento','Todos executados ✓'],['Tempo apontado','3 h 52 min (previsto 3 h)'],['Teste final','Registrado ✓'],['Fotos finais','2']]))+NOTE('Só o chefe de oficina libera o checklist para a entrega.')+R('end',BT('Devolver ao mecânico',{r:'CHF',set:'STAGE=3'}),BT('Liberar checklist de entrega',{r:'CHF',set:'STAGE=5',c:'pri'}))];
+  case 5:return['Etapa 6 · Entrega do veículo',lock+`<div class="cols e"><div>${T(['Conferência','Entrada','Agora'],[['Km','148.230','148.262'],['Combustível','1/4','1/4'],['Avarias','2','2 (iguais)'],['Fotos','4','4']])}${CK('Conferi o veículo com o cliente',true)}${X('Garantia','Peças 90 dias · Serviço 6 meses')}</div><div>${RD('À vista ou PIX (5% de desconto)',true)}${RD('Cartão em até 4x',false)}<div style="height:6px"></div>${TOT('Total','R$ 1.240,00')+TOT('Desconto à vista','– R$ 62,00')+TOT('A receber','R$ 1.178,00','big')}${CK('Emitir nota fiscal',true)}${SIG('Assinatura do cliente na entrega',true)}</div></div>${R('end',BT('Entregar veículo',{r:'REC',set:'STAGE=6',c:'pri'}))}`];
+  default:return['OS encerrada',NOTE('Veículo entregue em 12/10 às 17:10. A OS ficou registrada no histórico do veículo e do cliente.','ok')+R('end',B('Imprimir comprovante','','ghost'),B('Voltar ao quadro','quadro','pri'))];
+  }
+}
+D('os',{m:'op',n:'quadro',t:'OS: ficha única',r:'REC,MEC,PEC,CHF,DIR'},()=>{
+  const [ttl,body]=osPanel();
+  const cli=ROLE==='MEC'?'Cliente: J. Pereira':'João Pereira · (47) 99123-4567';
+  return shell('OS-0187 · Ford Pampa · LXN-4590',
+   `<div class="row sb" style="margin-bottom:8px"><div class="row">${CH(ST[STAGE],STK[STAGE])}<span>${cli}</span></div><span style="color:var(--mute)">Mecânico: ${STAGE===0&&UI.mec==='0'?'—':'Rafael'}</span></div>`+STEPS(COL,STAGE)+
+   `<div class="cols l">${X(ttl,body)}<div>${X('Entrada','148.230 km · 1/4 de tanque<br>Risco no para-choque diant. esq.; amassado na porta tras. dir.<br>Pedido: barulho ao frear, pedal baixo<div style="height:6px"></div>'+PH(2))}${STAGE>=1?X('Itens e valor',T(['Item','Qtd','Valor'],ITENS)+TOT('Total','R$ 1.240,00','big')):''}${X('Andamento',EV.slice(0,STAGE+1).map(e=>R('',`<b>${e[0]}</b><span>${e[1]}</span>`)).join(''))}</div></div>`);
+});
+
+/* ============ 5. Agenda ============ */
+D('agenda',{m:'op',n:'agenda',t:'Agenda',r:'REC,DIR'},()=>{
+  const free=`<span style="color:var(--mute)">livre</span>`,ag=BT('+ Agendar',{set:'agf=1',c:'ghost'});
+  const rows=[['08:00','João Pereira · Ford Pampa','Freios',CH('Chegou','ok'),BT('Receber veículo',{go:'os-nova',r:'REC',c:'pri'})],['09:00',BK?'João Pereira · Ford Pampa':free,BK?'Freios':'',BK?CH('Confirmado','ok'):'',BK?'':ag],['10:00','Maria Souza · VW Gol','Revisão 30 mil',CH('Confirmado','ok'),''],['11:00',free,'','',ag],['13:00','Carlos Lima · Captiva','Luz do motor',CH('Aguardando resposta','warn'),''],['14:00',free,'','',ag],['16:00','Pedro Alves · Fiat Uno','Troca de óleo',CH('Confirmado','ok'),'']];
+  const right=UI.agf==='1'?X('Novo agendamento',G(1,S('Cliente','João Pereira'),S('Veículo','Ford Pampa · LXN-4590'),F('Data','13/10/2026'))+`<div class="f"><span>Horário livre</span>${SEG(['09:00','11:00','14:00'],0)}</div><div style="height:8px"></div>${TA('Motivo','Barulho ao frear.',40)}<div style="height:8px"></div><div class="wapp">Olá, João! Seu horário ficou para <b>13/10 às 09:00</b>. Para remarcar, avise com 2 horas de antecedência.</div>${R('end',BT('Cancelar',{set:'agf=0'}),BT('Agendar e avisar',{set:'agf=0',c:'pri'}))}`):X('WhatsApp automático','Confirmação ao agendar.<br>Lembrete 1 dia antes, com resposta 1 (confirmar) ou 2 (remarcar).')+X('Cancelar ou remarcar','Até 2 horas antes. Depois disso o horário é considerado perdido.');
+  return shell('Agenda',R('',SEG(['Seg 12/10','Ter 13/10','Qua 14/10','Qui 15/10','Sex 16/10','Sáb 17/10'],0))+'<div style="height:8px"></div>'+`<div class="cols l">${X('',T(['Hora','Cliente · veículo','Serviço','Situação',''],rows))}<div>${right}</div></div>`,{right:BT('+ Agendar',{set:'agf=1',c:'pri'})});
+});
+
+/* ============ 6. Contatos (clientes e fornecedores) ============ */
+const CT=[['João Pereira','Cliente','(47) 99123-4567','Brusque','2 veículos'],['Maria Souza','Cliente','(47) 99811-2200','Brusque','1 veículo'],['Carlos Lima','Cliente','(47) 98877-1020','Guabiruba','3 veículos'],['Ana Becker','Cliente','(47) 99655-7788','Brusque','2 veículos'],['Pedro Alves','Cliente','(47) 99244-0099','Botuverá','1 veículo'],['Auto Peças Brusque Ltda','Fornecedor','(47) 3351-0000','Brusque','Autopeças'],['Distribuidora Vale','Fornecedor','(47) 3355-1200','Itajaí','Lubrificantes e filtros'],['Oficina do Zé','Cliente+Fornecedor','(47) 99700-1234','Gaspar','1 veículo · retífica']];
+const tipo=t=>t.split('+').map(x=>CH(x,x==='Cliente'?'info':'warn')).join(' ');
+D('contatos',{m:'cad',n:'contatos',t:'Cliente / Fornecedor',r:'REC,PEC,DIR'},()=>{
+  const onlyCli=ROLE==='REC';
+  const vis=CT.map((c,i)=>({c,i})).filter(({c})=>onlyCli?c[1].includes('Cliente'):UI.cf==='all'||(UI.cf==='cli'&&c[1].includes('Cliente'))||(UI.cf==='forn'&&c[1].includes('Fornecedor')));
+  const sel=UI.cont==='novo'?-1:Number(UI.cont);
+  const cur=CT[sel>=0?sel:0];
+  const isF=cur[1]==='Fornecedor';
+  let panel;
+  if(UI.cont==='novo'){panel=X('Novo cadastro',`<div class="row">${CK('Cliente',true)}${CK('Fornecedor',false)}</div><div style="color:var(--mute);margin-bottom:6px">Pode marcar os dois: é um cadastro só.</div>${G(1,F('Nome / razão social'),F('CPF / CNPJ'),F('Telefone (WhatsApp)'),F('E-mail'),F('Endereço'))}${X('Veículo do cliente (opcional)',G(2,F('Placa'),F('Marca'),F('Modelo'),F('Ano'),F('Motorização'),F('Chassi')))}${CK('Dados usados só para o serviço (LGPD)',true)}${R('end',BT('Cancelar',{set:'cont=0'}),BT('Salvar',{set:'cont=0',c:'pri'}))}`)}
+  else if(isF){panel=X(cur[0],`<div class="row" style="margin-bottom:8px">${CH('Fornecedor','warn')}<span style="color:var(--mute)">${cur[4]} · ${cur[2]}</span></div>${T(['Peça','Último preço','Última compra'],[['Pastilha de freio','R$ 205,00','05/10'],['Disco de freio','R$ 238,00','05/10']])}${R('',BT('Entrada de peças',{go:'estoque',set:'est=entrada',r:'PEC,DIR',c:'pri'}),BT('Pedir preço',{go:'estoque',set:'est=preco',r:'PEC,DIR',c:'ghost'}),BT('Editar',{set:'cont=novo',c:'ghost'}))}`)}
+  else{panel=X(cur[0],`<div class="row" style="margin-bottom:8px">${tipo(cur[1])}<span style="color:var(--mute)">${cur[2]} · ${cur[3]}</span></div>${T(['Placa','Veículo','OS aberta'],[['LXN-4590','Ford Pampa 1995',sel===0&&STAGE<6?CH(ST[STAGE],STK[STAGE]):'—'],['MAB-1C23','VW Gol 2015','—']])}${T(['OS','Data','Serviço','Valor'],[['OS-0141','03/06/2026','Troca de correia','R$ 890,00'],['OS-0098','21/02/2026','Revisão 30 mil','R$ 560,00']])}${R('',BT('Nova OS',{go:'os-nova',r:'REC',c:'pri'}),BT('+ Veículo',{set:'cont=novo',c:'ghost'}),BT('Editar',{set:'cont=novo',c:'ghost'}))}`)}
+  return shell('Cliente / Fornecedor',(onlyCli?'':SEGS([['Todos','all'],['Clientes','cli'],['Fornecedores','forn']],'cf'))+'<div style="height:8px"></div>'+`<div class="cols e"><div>${BAR('nome, telefone, CPF/CNPJ ou placa',BT('+ Novo',{set:'cont=novo',c:'pri'}))}${T(['Nome','Tipo','Telefone'],vis.map(({c,i})=>[(i===sel?'▸ ':'')+c[0],tipo(c[1]),c[2]]),null,k=>`data-set="cont=${vis[k].i}" ${vis[k].i===sel?'class="sel"':''}`)}</div><div>${panel}</div></div>`);
+});
+
+/* ============ 7. Estoque ============ */
+D('estoque',{m:'cad',n:'estoque',t:'Estoque',r:'PEC,DIR'},()=>{
+  const adm='PEC,DIR';
+  let panel='';
+  if(UI.est==='entrada')panel=X('Entrada de peças',G(3,S('Fornecedor','Auto Peças Brusque Ltda'),F('Nota fiscal nº','45.210'),F('Data','12/10/2026'))+T(['Peça','Qtd','Valor unit.'],[['Disco de freio','4','R$ 238,00'],['Correia dentada','2','R$ 115,00']])+`<div class="row" style="margin-bottom:8px"><button class="demo" data-go="contatos" data-set="cont=novo">Fornecedor não aparece? Cadastre em Cliente / Fornecedor</button></div>`+R('end',BT('Cancelar',{set:'est=none'}),BT('Confirmar entrada',{set:'est=none',r:adm,c:'pri'})));
+  if(UI.est==='peca')panel=X('Nova peça',G(3,F('Código'),F('Nome','','s2'))+G(3,F('Marca'),S('Unidade','un'),F('Estoque mínimo'))+G(2,F('Preço de venda'),S('Fornecedor habitual',''))+R('end',BT('Cancelar',{set:'est=none'}),BT('Salvar',{set:'est=none',r:adm,c:'pri'})));
+  if(UI.est==='preco')panel=X('Pedir preço ao fornecedor',S('Fornecedor','Auto Peças Brusque Ltda')+'<div style="height:6px"></div><div class="wapp">Olá! Preciso de preço e prazo para: 4× Disco de freio e 2× Correia dentada. Obrigado!</div><div style="color:var(--mute);margin:6px 0">A resposta chega no WhatsApp da oficina.</div>'+R('end',BT('Cancelar',{set:'est=none'}),BT('Enviar',{set:'est=none',r:adm,c:'pri'})));
+  return shell('Estoque',NOTE((DISCO<4?3:2)+' peças abaixo do mínimo.','bad')+BAR('código ou nome da peça',BT('Pedir preço',{set:'est=preco',r:adm,c:'ghost'}),BT('Entrada de peças',{set:'est=entrada',r:adm}),BT('+ Peça',{set:'est=peca',r:adm,c:'pri'}))+T(['Código','Peça','Em estoque','Mínimo','Reservado','Preço','Fornecedor'],[['P-0101','Pastilha de freio dianteira','6','4',STAGE>=3?'0':'1','R$ 210,00','Auto Peças Brusque'],['P-0102','Disco de freio',DISCO<4?CH(DISCO,'bad'):String(DISCO),'4',STAGE>=3?'0':'2','R$ 240,00','Auto Peças Brusque'],['P-0230','Óleo 5W30 (litro)',CH('3','bad'),'10','0','R$ 48,00','Distribuidora Vale'],['P-0310','Filtro de óleo','12','6','2','R$ 32,00','Distribuidora Vale'],...NP])+panel);
+});
+
+/* ============ 8. Fila e liberação (chefe) ============ */
+D('fila',{m:'ges',n:'fila',t:'Fila de serviços e liberação',r:'CHF,DIR'},()=>{
+  const sel=n=>`<select class="in">${['Rafael','Diego','Marcos'].map(o=>`<option ${o===n?'selected':''}>${o}</option>`).join('')}</select>`,ar=`<span class="arrows"><span>▲</span><span>▼</span></span>`;
+  const rows=[['1','OS-0183','Suspensão','4,0 h',sel('Rafael'),ar]];
+  if(STAGE===3)rows.push(['2','OS-0187','Freios','3,0 h',sel('Rafael'),ar]);
+  rows.push([String(rows.length+1),'OS-0185','Embreagem','3,5 h',sel('Diego'),ar],[String(rows.length+2),'OS-0190','Correia','2,0 h',sel('Marcos'),ar]);
+  return shell('Fila de serviços e liberação',
+   `<div class="cols e">${X('Fila de serviços aprovados',T(['#','OS','Serviço','Previsto','Mecânico','Ordem'],rows)+R('end',BT('Salvar sequência',{r:'CHF',c:'pri'})))}${X('Aguardando liberação do checklist',STAGE===4?CARD('OS-0187 · Ford Pampa','Serviço concluído · 3 h 52 min')+R('end',BT('Abrir OS',{go:'os',c:'ghost'}),BT('Liberar checklist',{r:'CHF',set:'STAGE=5',c:'pri'})):'<span style="color:var(--mute)">Nenhum serviço aguardando.</span>')}</div>`+(ROLE==='DIR'?NOTE('Diretor acompanha. Só o chefe de oficina altera a sequência e libera o checklist.'):''));
+});
+
+/* ============ 9. Pessoas e acessos ============ */
+D('pessoas',{m:'ges',n:'pessoas',t:'Pessoas e acessos',r:'CHF,DIR'},()=>{
+  const all=[['Paula R.','Recepção',CH('Ativo','ok')],['Lúcia T.','Peças e orçamento',CH('Ativo','ok')],['Bruno S.','Peças e orçamento',CH('Ativo','ok')],['Carlos M.','Chefe de oficina',CH('Ativo','ok')],['Rafael M.','Mecânico',CH('Ativo','ok')],['Diego S.','Mecânico',CH('Ativo','ok')],['Marcos P.','Mecânico',CH('Aguardando 1º acesso','warn')],...PP];
+  const rows=ROLE==='CHF'?all.filter(r=>r[1]==='Mecânico'):all;
+  const form=UI.pf==='1'?X(ROLE==='CHF'?'Novo mecânico':'Nova pessoa',G(1,F('Nome'),F('Usuário / e-mail'),ROLE==='CHF'?F('Função','Mecânico'):S('Função','Recepção'),F('Senha provisória'))+NOTE(ROLE==='CHF'?'O chefe de oficina cadastra apenas mecânicos.':'Mecânicos são cadastrados pelo chefe de oficina.')+R('end',BT('Cancelar',{set:'pf=0'}),BT('Salvar',{set:'pf=0',c:'pri'}))):'';
+  return shell(ROLE==='CHF'?'Mecânicos':'Pessoas e acessos',`<div class="cols l"><div>${BAR('nome',BT('+ Novo',{set:'pf=1',c:'pri'}))}${T(['Nome','Função','Acesso'],rows)}</div><div>${form}${X('Quem vê o quê',T(['Perfil','Acessa'],[['Recepção','Quadro, agenda, clientes, nova OS e entrega'],['Mecânico','Quadro dele, inspeção e execução'],['Peças e orçamento','Quadro, orçamento, estoque, clientes e fornecedores'],['Chefe de oficina','Quadro, fila, liberação, mecânicos e produtividade. Não acessa estoque, clientes/fornecedores, veículos nem agenda'],['Diretor','Tudo, mais pessoas e relatórios gerais']]))}</div></div>`);
+});
+
+/* ============ 10. Relatórios ============ */
+D('relatorios',{m:'ges',n:'rel',t:'Relatórios',r:'CHF,DIR'},()=>{
+  const tabs=`<div class="seg" style="margin-bottom:10px"><span class="${UI.rel==='prod'?'on':''}" data-set="rel=prod" style="cursor:pointer">Produtividade</span>${can('DIR')?`<span class="${UI.rel==='geral'?'on':''}" data-set="rel=geral" style="cursor:pointer">Geral da empresa</span>`:`<span style="opacity:.5">🔒 Geral da empresa: só o diretor</span>`}</div>`;
+  const geral=can('DIR')&&UI.rel==='geral';
+  return shell('Relatórios · outubro/2026',tabs+(geral?G(4,K('Faturamento','R$ 86.400'),K('OS entregues','38'),K('Valor em estoque','R$ 41.200'),K('Previsão do mês','R$ 112.000'))+`<div class="cols e">${X('Faturamento por semana',BARS([['Semana 1',60,'R$ 21 mil'],['Semana 2',85,'R$ 30 mil'],['Semana 3',70,'R$ 25 mil'],['Semana 4',30,'R$ 10 mil']]))}${X('Estoque',T(['Indicador','Valor'],[['Peças abaixo do mínimo','3'],['Compras no mês','R$ 12.600']]))}</div>`:G(4,K('OS concluídas','38'),K('Horas apontadas','256 h'),K('Horas previstas','248 h'),K('Retornos em garantia','2'))+X('Horas por mecânico',BARS([['Rafael',90,'96 h'],['Diego',82,'88 h'],['Marcos',68,'72 h']]))+T(['Mecânico','OS','Horas apont.','Eficiência'],[['Rafael','15','96','98%'],['Diego','13','88','98%'],['Marcos','10','72','94%']])));
+});
+
+/* ============ app ============ */
+const app=document.getElementById('app');
+let view='proto',cur='login',onlyRole=false;
+const byId=id=>SCR.find(s=>s.id===id);
+function renderScreen(s){CTX=s;return s.fn()}
+function applySet(str){str.split(';').forEach(p=>{const [k,v]=p.split('=');if(k==='STAGE')STAGE=Number(v);else UI[k]=v})}
+function paintProto(){
+  const s=byId(cur),html=renderScreen(s),i=SCR.indexOf(s);
+  let idx='',last='';
+  SCR.filter(x=>!onlyRole||x.r.includes(ROLE)||x.id===cur).forEach(x=>{if(x.m!==last){idx+=`<h3>${MODS[x.m]}</h3>`;last=x.m}idx+=`<button data-go="${x.id}" ${x.id===cur?'aria-current="true"':''}>${x.t}</button>`});
+  app.innerHTML=`<div class="layout"><aside class="index" aria-label="Telas"><label class="only"><input type="checkbox" id="only" ${onlyRole?'checked':''}> Só telas do perfil ${ROLES[ROLE]}</label><div class="stg">OS-0187 agora: <b>${ST[STAGE]}</b><br><button class="demo" data-reset="1">reiniciar demonstração</button></div>${idx}</aside><div><div class="stage" id="stage">${html}</div><div class="info"><div class="pn"><button data-step="-1" ${i===0?'disabled':''}>◀ Anterior</button><button data-step="1" ${i===SCR.length-1?'disabled':''}>Próxima ▶</button><span style="color:var(--mute);align-self:center">${i+1} / ${SCR.length}</span></div></div></div></div>`;
+}
+function paintBoard(){
+  let h='<div class="layout" style="grid-template-columns:1fr"><div class="board">',last='';
+  SCR.forEach(x=>{if(x.m!==last){if(last)h+='</div>';h+=`<h3>${MODS[x.m]}</h3><div class="grid">`;last=x.m}
+    h+=`<div class="mini" role="button" tabindex="0" data-open="${x.id}"><div class="cap"><b>${x.t}</b></div><div class="view"><div class="sc">${renderScreen(x)}</div></div></div>`});
+  h+='</div></div></div>';app.innerHTML=h;
+}
+function paint(){
+  document.querySelectorAll('[data-view]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===view));
+  if(view==='proto')paintProto();else paintBoard();
+  updatePbar();requestAnimationFrame(fit);
+}
+function go(id){if(!byId(id))return;cur=id;view='proto';try{history.replaceState(null,'','#'+id)}catch(e){}paint();window.scrollTo({top:0})}
+
+/* ============ modo apresentação ============ */
+const TOUR=[['login','REC',0,''],['quadro','REC',0,''],['agenda','REC',0,''],['agenda','REC',0,'agf=1'],['contatos','REC',0,''],['os-nova','REC',0,''],['os','REC',0,''],
+['quadro','MEC',0,''],['os','MEC',0,'mec=1'],
+['quadro','PEC',1,''],['os','PEC',1,''],['os','REC',2,''],
+['quadro','MEC',3,''],['os','MEC',3,''],
+['os','CHF',4,''],['fila','CHF',4,''],
+['os','REC',5,''],['quadro','REC',6,''],
+['estoque','PEC',6,''],['estoque','PEC',6,'est=entrada'],['contatos','PEC',6,'cont=5'],
+['pessoas','CHF',6,'pf=1'],['relatorios','CHF',6,''],['pessoas','DIR',6,'pf=1'],['relatorios','DIR',6,'rel=geral']];
+let pres=false,ti=0;
+const same=i=>TOUR[i]&&TOUR[i][0]===cur&&TOUR[i][1]===ROLE&&TOUR[i][2]===STAGE;
+const tix=()=>same(ti)?ti:TOUR.findIndex(t=>t[0]===cur&&t[1]===ROLE&&t[2]===STAGE);
+function fit(){const w=document.querySelector('#stage .wf');if(!pres||!w)return;w.style.zoom=1;w.style.zoom=Math.min((innerWidth-24)/w.offsetWidth,(innerHeight-76)/w.offsetHeight,1.8)}
+function loadStep(i){const t=TOUR[i];ti=i;ROLE=t[1];STAGE=t[2];UI={...UI0};if(t[3])applySet(t[3]);sel.value=ROLE;go(t[0])}
+function tour(d){let i=tix();if(i<0)i=ti;loadStep(Math.max(0,Math.min(TOUR.length-1,i+d)))}
+function setPres(on){pres=on;document.body.classList.toggle('pres',on);
+  if(on){view='proto';try{document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen().catch(()=>{})}catch(e){}loadStep(0)}
+  else{try{document.fullscreenElement&&document.exitFullscreen()}catch(e){}paint()}}
+function updatePbar(){const i=tix();if(i>=0)ti=i;const c=document.querySelector('#pbar .cap');if(c)c.textContent=`${ROLES[ROLE]} · ${byId(cur).t}${i>=0?`  (${ti+1}/${TOUR.length})`:''}`}
+document.addEventListener('keydown',e=>{if(!pres||/INPUT|TEXTAREA|SELECT/.test(e.target.tagName))return;if(['ArrowRight','PageDown',' '].includes(e.key)){e.preventDefault();tour(1)}else if(['ArrowLeft','PageUp'].includes(e.key)){e.preventDefault();tour(-1)}else if(e.key==='Escape'){setPres(false)}});
+window.addEventListener('resize',fit);
+document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&pres)setPres(false)});
+
+const $st=()=>document.getElementById('stage');
+let tt;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2200)}
+const fmt=s=>[s/3600|0,(s/60|0)%60,s%60].map(n=>String(n).padStart(2,'0')).join(':');
+setInterval(()=>{if(RUN)TM++;const e=document.querySelector('.timer');if(e)e.textContent=fmt(TM)},1000);
+const MSG={'Buscar':'Placa encontrada no cadastro','Salvar sequência':'Sequência da fila salva','Imprimir comprovante':'Comprovante enviado para impressão','Esqueci minha senha':'Link de redefinição enviado ao e-mail','Enviar por WhatsApp':'Orçamento enviado ao cliente pelo WhatsApp','Agendar e avisar':'Agendado · confirmação enviada no WhatsApp','Enviar':'Pedido de preço enviado ao fornecedor','Confirmar entrada':'Entrada registrada · estoque atualizado','Aprovar e liberar':'Peças reservadas e serviço na fila do mecânico','Liberar checklist de entrega':'Checklist liberado para a recepção','Entregar veículo':'Veículo entregue · OS encerrada','Avisar a recepção':'Recepção avisada · o cliente precisa aprovar','Abrir OS':'OS-0187 aberta','Salvar':'Salvo','Cadastrar':'Administrador cadastrado · agora é só entrar'};
+function pre(l){const st=$st(),ins=[...st.querySelectorAll('.box input.in')].map(i=>i.value.trim()),sl=[...st.querySelectorAll('.box select')].map(s=>s.value);
+ if(l==='Agendar e avisar')BK=true;
+ if(l==='Cadastrar')FIRST=false;
+ if(l==='Confirmar entrada')DISCO+=4;
+ if(l==='Salvar'&&cur==='contatos'&&UI.cont==='novo'&&ins[0]){const t=[...st.querySelectorAll('.box .ck')].slice(0,2).filter(c=>c.classList.contains('on')).map(c=>c.textContent.trim()).join('+')||'Cliente';CT.push([ins[0],t,ins[2]||'(47) 99000-0000','Brusque',t==='Fornecedor'?'Novo fornecedor':'Novo cadastro'])}
+ if(l==='Salvar'&&cur==='estoque'&&UI.est==='peca')NP.push([ins[0]||'P-0999',ins[1]||'Nova peça','0',ins[3]||'0','0',ins[4]||'R$ 0,00',sl[1]||'—']);
+ if(l==='Salvar'&&cur==='pessoas'&&UI.pf==='1'&&ins[0])PP.push([ins[0],sl[0]||ins[2]||'Mecânico',CH('Aguardando 1º acesso','warn')]);
+ if(MSG[l])toast(MSG[l])}
+function extra(e){const t=e.target;
+ const sg=t.closest('.sig');if(sg){const v=sg.querySelector('svg');if(v)v.remove();else sg.insertAdjacentHTML('afterbegin','<svg viewBox="0 0 400 96" preserveAspectRatio="none"><path d="M40 60 C70 10 90 90 120 40 S170 20 200 58 S260 30 300 50 S340 40 360 30" fill="none" stroke="currentColor" stroke-width="2"/></svg>');return true}
+ const ad=t.closest('.ph .add');if(ad){ad.insertAdjacentHTML('beforebegin','<div class="px"><span>foto '+(ad.parentElement.querySelectorAll('.px').length+1)+'</span></div>');return true}
+ const ar=t.closest('.arrows span');if(ar){const tr=ar.closest('tr'),up=ar.textContent==='▲',o=up?tr.previousElementSibling:tr.nextElementSibling;if(o){up?tr.parentNode.insertBefore(tr,o):tr.parentNode.insertBefore(o,tr);[...tr.parentNode.rows].forEach((r,i)=>r.cells[0].textContent=i+1)}return true}
+ const sp=t.closest('.seg span:not([data-set])');if(sp){sp.parentElement.querySelectorAll('span').forEach(x=>x.classList.toggle('on',x===sp));return true}
+ const ck=t.closest('.ck');if(ck){if(ck.classList.contains('rd')){const bx=ck.closest('.box')||ck.parentElement;bx.querySelectorAll('.ck.rd').forEach(x=>x.classList.toggle('on',x===ck))}else ck.classList.toggle('on');return true}
+ if(t.closest('.cardx.nolink')){toast('Nesta demonstração a OS-0187 é a que percorre as etapas');return true}
+ const bt=t.closest('button.b,.demo');if(!bt||bt.classList.contains('off')||bt.dataset.pres||bt.dataset.step||bt.dataset.tour)return false;
+ const l=bt.textContent.replace('🔒','').trim();
+ if(l==='Pausar'||l==='Retomar'){RUN=!RUN;toast(RUN?'Cronômetro retomado':'Cronômetro pausado');paint();return true}
+ if(!bt.dataset.set&&/^\+ (Peça|Serviço)/.test(l)){const tb=bt.parentElement.previousElementSibling;if(tb&&tb.tagName==='TABLE'){const n=tb.tHead.rows[0].cells.length,c=l.includes('Peça')?['Peça','Fluido de freio DOT 4','1','R$ 58,00',CH('6 em estoque','ok')]:['Serviço','Alinhamento','1,0 h','R$ 120,00','—'];tb.tBodies[0].insertAdjacentHTML('beforeend','<tr>'+c.slice(0,n).map(x=>'<td>'+x+'</td>').join('')+'</tr>');toast('Item adicionado')}return true}
+ if(!bt.dataset.go&&!bt.dataset.set&&!bt.dataset.reset){toast(MSG[l]||l+' · feito');return true}
+ pre(l);return false}
+document.addEventListener('input',e=>{const q=e.target.closest('[data-q]');if(!q)return;const tb=q.closest('.bar').nextElementSibling;if(tb&&tb.tBodies&&tb.tBodies[0])[...tb.tBodies[0].rows].forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(q.value.toLowerCase())?'':'none'})});
+const sel=document.getElementById('role');
+document.addEventListener('click',e=>{
+  if(extra(e))return;
+  const pr=e.target.closest('[data-pres]');if(pr){setPres(pr.dataset.pres==='1');return}
+  const tr=e.target.closest('[data-tour]');if(tr){tour(Number(tr.dataset.tour));return}
+  const rs=e.target.closest('[data-reset]');if(rs){STAGE=0;BK=false;DISCO=1;NP=[];PP=[];RUN=true;FIRST=true;UI={...UI0};paint();return}
+  const g=e.target.closest('[data-go],[data-set]');
+  if(g&&!g.closest('.mini')&&!g.classList.contains('off')){e.preventDefault();if(g.dataset.set)applySet(g.dataset.set);if(g.dataset.go)go(g.dataset.go);else paint();return}
+  const o=e.target.closest('[data-open]');if(o){go(o.dataset.open);return}
+  const v=e.target.closest('[data-view]');if(v){view=v.dataset.view;paint();window.scrollTo({top:0});return}
+  const st=e.target.closest('[data-step]');if(st){const i=SCR.indexOf(byId(cur))+Number(st.dataset.step);if(SCR[i])go(SCR[i].id)}
+});
+sel.innerHTML=Object.entries(ROLES).map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
+sel.addEventListener('change',()=>{ROLE=sel.value;UI={...UI0};if(view==='proto'){go(byId(cur).r.includes(ROLE)?cur:'quadro')}else paint()});
+document.addEventListener('change',e=>{if(e.target.id==='only'){onlyRole=e.target.checked;paint()}});
+try{const h=location.hash.slice(1);if(h&&byId(h))cur=h}catch(e){}
+paint();
+</script>
+</body>
+</html>
