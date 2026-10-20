@@ -126,7 +126,7 @@ table.t{width:100%;border-collapse:collapse;background:var(--panel2);border-radi
 .px::after{--a:-30deg;transform:translate(-50%,-50%) rotate(-30deg)}
 .px span{position:relative;z-index:1;background:var(--panel2);padding:0 6px}
 .ph{display:flex;gap:6px;flex-wrap:wrap}
-.ph .px{width:74px;height:56px;font-size:10px}
+.ph .px{width:74px;height:56px;font-size:10px;background-size:cover}.ph .add{cursor:pointer;gap:2px}.ph .add.cam{border-style:solid;color:var(--acc);border-color:var(--acc)}.ph .add svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8}.ph .add input{display:none}
 .ph .add{width:74px;height:56px;border:1.5px dashed var(--mute);border-radius:6px;display:grid;place-items:center;color:var(--mute);font-size:10px;text-align:center}
 .steps{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
 .steps span{padding:3px 12px;border-radius:12px;background:var(--panel2);color:var(--mute);font-size:11px}
@@ -285,14 +285,13 @@ select.in{width:100%;color:var(--ink)}.ck,.seg span,.sig,.ph .add,.arrows span{c
 
 <script>
 /* ============ perfis e hierarquia ============ */
-const ROLES={REC:'Recepção',MEC:'Mecânico',PEC:'Peças e orçamento',CHF:'Chefe de oficina',DIR:'Diretor'};
+const ROLES={ALL:'Acesso completo',REC:'Recepção',MEC:'Mecânico',PEC:'Peças e orçamento',CHF:'Chefe de oficina',DIR:'Diretor'};
 const MODS={auth:'Acesso',op:'Operação do dia',cad:'Cadastros',ges:'Gestão'};
 const NAV=[
  ['quadro','Quadro de OS','home','REC,MEC,PEC,CHF,DIR','quadro'],
  ['agenda','Agenda','cal','REC,DIR','agenda'],
  ['contatos','Cliente / Fornecedor','users','REC,PEC,DIR','contatos'],
  ['estoque','Estoque','box','PEC,DIR','estoque'],
- ['fila','Fila e liberação','wrench','CHF,DIR','fila'],
  ['pessoas','Pessoas e acessos','team','CHF,DIR','pessoas'],
  ['rel','Relatórios','chart','CHF,DIR','relatorios']
 ];
@@ -312,16 +311,16 @@ const STK=['warn','info','warn','info','warn','ok','ok'];
 const COL=['Inspeção','Orçamento','Aprovação','Serviço','Liberação do chefe','Entrega'];
 const OWN=['MEC','PEC','REC,PEC','MEC','CHF','REC'];
 const OWNL=['Mecânico','Peças e orçamento','Recepção ou Peças e orçamento','Mecânico','Chefe de oficina','Recepção'];
-let STAGE=0,ROLE='REC',BK=false,DISCO=1,NP=[],PP=[],RUN=true,TM=8073,FIRST=true;
-const UI0={tab:'entrar',cf:'all',cont:'0',agf:'0',est:'none',pf:'0',rel:'prod',mec:'0',extra:'0'};
+let STAGE=0,ROLE='ALL',BK=false,DISCO=1,NP=[],PP=[],RUN=true,TM=8073,FIRST=true;
+const UI0={tab:'entrar',cf:'all',cont:'0',agf:'0',est:'none',pf:'0',rel:'prod',mec:'0',extra:'0',ct:'cli',nv:'0'};
 let UI={...UI0};
-const can=r=>r.split(',').includes(ROLE);
+const can=r=>ROLE==='ALL'||r.split(',').includes(ROLE);
 
 /* ============ helpers ============ */
 const B=(t,go,c='')=>`<button class="b ${c}" ${go?`data-go="${go}"`:''}>${t}</button>`;
 const BT=(t,o={})=>{const ok=!o.r||can(o.r);return `<button class="b ${o.c||''} ${ok?'':'off'}" ${ok&&o.go?`data-go="${o.go}"`:''} ${ok&&o.set?`data-set="${o.set}"`:''} ${ok?'':'title="Só para: '+o.r.split(',').map(x=>ROLES[x]).join(', ')+'"'}>${ok?'':'🔒 '}${t}</button>`};
 const F=(l,v='',c='')=>`<div class="f ${c}"><span>${l}</span><input class="in ${v?'v':''}" value="${v}"></div>`;
-const OPT={'Cliente':['João Pereira','Maria Souza','Carlos Lima'],'Veículo':['Ford Pampa · LXN-4590','VW Gol · MAB-1C23'],'Unidade':['un','kg','l','cx'],'Função':['Recepção','Mecânico','Peças e orçamento','Chefe de oficina'],'Fornecedor':['Auto Peças Brusque Ltda','Distribuidora Vale'],'Fornecedor habitual':['','Auto Peças Brusque Ltda','Distribuidora Vale']};
+const OPT={'Cliente':['João Pereira','Maria Souza','Carlos Lima'],'Veículo':['Ford Pampa · LXN-4590','VW Gol · MAB-1C23'],'Unidade':['un','kg','l','cx'],'Função':['Recepção','Mecânico','Peças e orçamento','Chefe de oficina'],'Fornecedor':['Auto Peças Brusque Ltda','Distribuidora Vale'],'Fornecedor habitual':['','Auto Peças Brusque Ltda','Distribuidora Vale'],'Mecânico responsável':['Não atribuído','Rafael','Diego','Marcos']};
 const S=(l,v='',c='')=>`<div class="f ${c}"><span>${l}</span><select class="in">${[...new Set([v,...(OPT[l]||[])])].map(o=>`<option ${o===v?'selected':''}>${o}</option>`).join('')}</select></div>`;
 const TA=(l,v='',h=64,c='')=>`<div class="f ${c}"><span>${l}</span><textarea class="in ta ${v?'v':''}" style="height:${h}px">${v}</textarea></div>`;
 const G=(n,...i)=>`<div class="g" style="--n:${n}">${i.join('')}</div>`;
@@ -337,7 +336,8 @@ const SEG=(o,on)=>`<div class="seg">${o.map((x,i)=>`<span class="${i===on?'on':'
 const SEGS=(o,key)=>`<div class="seg">${o.map(([lab,val])=>`<span class="${UI[key]===val?'on':''}" data-set="${key}=${val}" style="cursor:pointer">${lab}</span>`).join('')}</div>`;
 const SIG=(l,signed)=>`<div class="sig">${signed?'<svg viewBox="0 0 400 96" preserveAspectRatio="none"><path d="M40 60 C70 10 90 90 120 40 S170 20 200 58 S260 30 300 50 S340 40 360 30" fill="none" stroke="currentColor" stroke-width="2"/></svg>':''}<span>${l}</span></div>`;
 const PX=(l,h=60,w='100%')=>`<div class="px" style="height:${h}px;width:${w}"><span>${l}</span></div>`;
-const PH=n=>`<div class="ph">${Array.from({length:n},(_,i)=>`<div class="px"><span>foto ${i+1}</span></div>`).join('')}<div class="add">+ FOTO</div></div>`;
+const PH=n=>`<div class="ph">${Array.from({length:n},(_,i)=>`<div class="px"><span>foto ${i+1}</span></div>`).join('')}<label class="add cam" title="Tirar foto com a câmera"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg><span>Câmera</span><input type="file" accept="image/*" capture="environment"></label><label class="add" title="Escolher da galeria"><span>+ FOTO</span><input type="file" accept="image/*" multiple></label></div>`;
+const CV=(nv,newCli)=>`<div class="cols e"><div>${X('Dados do cliente',newCli?G(1,F('Nome / razão social'),F('CPF / CNPJ'),F('Telefone (WhatsApp)'),F('E-mail'),F('Endereço')):G(1,S('Cliente','João Pereira'),F('Telefone (WhatsApp)','(47) 99123-4567')))}</div><div>${nv?X('Dados do veículo',G(2,F('Placa'),F('Marca'),F('Modelo'),F('Ano'),F('Cor'),F('Motorização'),F('Chassi (opcional)'),F('Km atual'))+R('end',BT('Usar veículo cadastrado',{set:'nv=0',c:'ghost'}))):X('Veículo',(newCli?'<div style="color:var(--mute);margin-bottom:8px">Cadastre o cliente e, se ele trouxer um veículo, adicione os dados ao lado.</div>':S('Veículo','Ford Pampa · LXN-4590')+'<div style="height:8px"></div>')+BT('+ Novo veículo',{set:'nv=1',r:'REC',c:'ghost'}))}</div></div>`;
 const STEPS=(a,c)=>`<div class="steps">${a.map((s,i)=>`<span class="${i===c?'on':i<c?'done':''}">${s}</span>`).join('')}</div>`;
 const K=(l,v)=>`<div class="kpi"><b>${v}</b><span>${l}</span></div>`;
 const BARS=d=>`<div class="bars">${d.map(([l,p,t])=>`<div><span>${l}</span><i style="width:${p}%"></i><em>${t}</em></div>`).join('')}</div>`;
@@ -346,7 +346,7 @@ const CARD=(t,sub,go,cls='')=>`<div class="cardx ${go?'':'nolink'} ${cls}" ${go?
 
 /* ============ casca ============ */
 let CTX=null;
-const side=()=>`<nav class="side"><div class="brand">SGO</div>${NAV.filter(n=>n[3].includes(ROLE)).map(n=>`<button data-go="${n[4]}" class="${CTX&&CTX.n===n[0]?'on':''}"><svg viewBox="0 0 24 24">${IC[n[2]]}</svg>${n[0]==='quadro'&&ROLE==='MEC'?'Meus serviços':n[1]}</button>`).join('')}<div class="sp"></div><div class="who">${ROLES[ROLE]}</div><button data-go="login"><svg viewBox="0 0 24 24">${IC.exit}</svg>Sair</button></nav>`;
+const side=()=>`<nav class="side"><div class="brand">SGO</div>${NAV.filter(n=>ROLE==='ALL'||n[3].includes(ROLE)).map(n=>`<button data-go="${n[4]}" class="${CTX&&CTX.n===n[0]?'on':''}"><svg viewBox="0 0 24 24">${IC[n[2]]}</svg>${n[0]==='quadro'&&ROLE==='MEC'?'Meus serviços':n[1]}</button>`).join('')}<div class="sp"></div><div class="who">${ROLES[ROLE]}</div><button data-go="login"><svg viewBox="0 0 24 24">${IC.exit}</svg>Sair</button></nav>`;
 const shell=(t,b,o={})=>`<div class="wf ${ROLE==='MEC'?'tab':''}">${side()}<section class="main"><div class="h"><h2>${t}</h2>${o.right||''}</div>${b}</section></div>`;
 const plain=b=>`<div class="wf plain">${b}</div>`;
 const SCR=[];
@@ -366,14 +366,14 @@ D('quadro',{m:'op',n:'quadro',t:'Quadro de OS',r:'REC,MEC,PEC,CHF,DIR'},()=>{
 /* ============ 3. Receber veículo (nova OS) ============ */
 D('os-nova',{m:'op',n:'quadro',t:'Receber veículo (nova OS)',r:'REC'},()=>shell('Receber veículo · nova OS',
   `<div class="row" style="margin-bottom:10px"><div class="f inl grow"><span>Placa</span><div class="in v" style="flex:1">LXN-4590</div></div>${B('Buscar','','ghost')}<button class="demo" data-go="agenda">veio de agendamento?</button></div>`+
-  NOTE('Encontrado: <b>Ford Pampa 1995</b> · João Pereira · (47) 99123-4567. <button class="demo" data-go="contatos">Placa nova? Cadastre cliente e veículo</button>','ok')+
+  NOTE('Encontrado: <b>Ford Pampa 1995</b> · João Pereira · (47) 99123-4567. <button class="demo" data-go="contatos">Placa nova? Cadastre cliente e veículo</button>','ok')+(UI.nv==='1'?CV(true,false):R('',BT('+ Novo veículo deste cliente',{set:'nv=1',r:'REC',c:'ghost'})))+
   G(3,F('Quilometragem','148.230 km'),`<div class="f"><span>Combustível</span>${SEG(['Res.','1/4','1/2','3/4','Cheio'],1)}</div>`,`<div class="f"><span>Estado geral</span>${SEG(['Bom','Regular','Ruim'],1)}</div>`)+
   `<div class="cols e"><div>${TA('Avarias visíveis','Risco no para-choque diant. esq.; amassado na porta tras. dir.',56)}<div style="height:8px"></div>${TA('Reclamação do cliente','Barulho ao frear, pedal baixo.',46)}<div style="height:8px"></div>${F('Previsão de conclusão','16/10/2026')}</div><div class="f"><span>Fotos (mínimo 4)</span>${PH(4)}</div></div>`+
   X('Termo e assinatura',`<div style="color:var(--mute);margin-bottom:6px">O cliente confirma o estado do veículo, autoriza a desmontagem só para orçamento e sabe que os valores podem mudar. Nada extra é feito sem novo aceite.</div>${CK('Cliente concorda com o termo',true)}${SIG('Assinatura do cliente',true)}`)+
-  R('end',B('Cancelar','quadro'),`<button class="b pri" data-go="os" data-set="STAGE=0;mec=0">Abrir OS</button>`)));
+  R('end',B('Cancelar','quadro'),`<button class="b pri" data-go="os" data-set="STAGE=0;mec=0;nv=0">Abrir OS</button>`)));
 
 /* ============ 4. OS: ficha única ============ */
-const EV=[['08:20','OS aberta e termo assinado'],['09:05','Mecânico enviou a inspeção'],['10:40','Orçamento enviado no WhatsApp'],['11:30','Cliente aprovou; peças reservadas'],['16:05','Serviço concluído'],['16:20','Chefe liberou o checklist'],['17:10','Veículo entregue']];
+const EV=[['08:20','OS aberta e termo assinado'],['09:05','Mecânico enviou a inspeção'],['10:40','Orçamento enviado no WhatsApp'],['11:30','Cliente aprovou; peças reservadas'],['16:05','Serviço concluído'],['16:20','Chefe liberou o checklist · cliente avisado no WhatsApp'],['17:10','Veículo entregue']];
 const ITENS=[['Pastilha de freio','1','R$ 210,00'],['Disco de freio','2','R$ 480,00'],['Mão de obra (3,0 h)','','R$ 550,00']];
 function osPanel(){
   const lock=STAGE<6&&!can(OWN[STAGE])?NOTE(`Esta etapa é de: <b>${OWNL[STAGE]}</b>. Você acompanha, mas não altera.`,'warn'):'';
@@ -381,12 +381,12 @@ function osPanel(){
   switch(STAGE){
   case 0:return['Etapa 1 · Inspeção do veículo',lock+(UI.mec==='0'?R('',BT('Atribuir para mim',{r:'MEC',set:'mec=1',c:'ghost'}),'<span style="color:var(--mute)">Ninguém pegou este serviço ainda.</span>')+'<div style="height:8px"></div>':'')+
    `<div class="cols e">${T(['Parte','Situação'],par.map((p,i)=>[p,SEG(['OK','Atenção','Crítico'],[2,0,1,0,1][i])]))}<div>${T(['Tipo','O que precisa','Qtd'],[['Peça','Pastilha de freio','1'],['Peça','Disco de freio','2'],['Serviço','Sistema de freios','3,0 h']])}${R('',B('+ Peça','','ghost'),B('+ Serviço','','ghost'))}</div></div>${X('Fotos e laudo do scanner',PH(3))}${R('end',BT('Enviar ao orçamento',{r:'MEC',set:'STAGE=1',c:'pri'}))}`];
-  case 1:return['Etapa 2 · Montar orçamento',lock+T(['Tipo','Item','Qtd','Valor','Estoque'],[['Peça','Pastilha de freio','1','R$ 210,00',CH('6 em estoque','ok')],['Peça','Disco de freio','2','R$ 480,00',CH('1 em estoque','bad')],['Serviço','Sistema de freios','3,0 h','R$ 550,00','—']])+R('',BT('+ Peça do estoque',{r:'PEC',c:'ghost'}),BT('+ Serviço',{r:'PEC',c:'ghost'}),BT('Pedir preço do disco',{r:'PEC',c:'ghost',go:'estoque',set:'est=preco'}))+
-   `<div class="cols e"><div>${TOT('Peças','R$ 690,00')+TOT('Mão de obra','R$ 550,00')+TOT('Total','R$ 1.240,00','big')}</div><div>${G(2,F('Desconto %','0'),F('Validade (dias)','7'))}<div style="color:var(--mute)">À vista ou PIX: 5% de desconto. Cartão: até 4x.</div></div></div>${R('end',BT('Enviar por WhatsApp',{r:'PEC',set:'STAGE=2',c:'pri'}))}`];
+  case 1:return['Etapa 2 · Montar orçamento',lock+CV(UI.nv==='1',false)+'<div style="height:8px"></div>'+T(['Tipo','Item','Qtd','Valor','Estoque'],[['Peça','Pastilha de freio','1','R$ 210,00',CH('6 em estoque','ok')],['Peça','Disco de freio','2','R$ 480,00',CH('1 em estoque','bad')],['Serviço','Sistema de freios','3,0 h','R$ 550,00','—']])+R('',BT('+ Peça do estoque',{r:'PEC',c:'ghost'}),BT('+ Serviço',{r:'PEC',c:'ghost'}),BT('Pedir preço do disco',{r:'PEC',c:'ghost',go:'estoque',set:'est=preco'}))+
+   `<div class="cols e"><div>${TOT('Peças','R$ 690,00')+TOT('Mão de obra','R$ 550,00')+TOT('Total','R$ 1.240,00','big')}</div><div>${G(2,F('Desconto %','0'),F('Validade (dias)','7'))}<div style="color:var(--mute)">À vista ou PIX: 5% de desconto. Cartão: até 4x.</div></div></div>${R('end',BT('Enviar por WhatsApp',{r:'PEC',set:'STAGE=2;nv=0',c:'pri'}))}`];
   case 2:return['Etapa 3 · Aprovação do cliente',lock+`<div class="wapp" style="margin-bottom:8px">Olá, João! O orçamento da sua Pampa ficou em <b>R$ 1.240,00</b>, válido por 7 dias. Veja os itens e as fotos no link e responda <b>APROVO</b> para autorizar.</div>`+X('',RD('Cliente respondeu "APROVO" no WhatsApp (11:28)',true)+RD('Cliente assinou na oficina',false)+SIG('Assinatura do cliente',false))+NOTE('Ao aprovar, as peças saem do estoque para esta OS e o serviço entra na fila do mecânico. Se recusar, o carro é remontado e entregue sem o serviço.')+R('end',BT('Recusar',{r:'REC,PEC',set:'STAGE=4',c:'bad'}),BT('Aprovar e liberar',{r:'REC,PEC',set:'STAGE=3',c:'pri'}))];
   case 3:return['Etapa 4 · Execução do serviço',lock+`<div class="cols e"><div>${X('Tempo de serviço',`<div class="timer">02:14:33</div><span style="color:var(--mute)">Previsto 3,0 h</span>`)}<div class="row">${BT('Iniciar',{r:'MEC',c:'off'})}${BT(RUN?'Pausar':'Retomar',{r:'MEC'})}${BT('Concluir',{r:'MEC',set:'STAGE=4',c:'pri'})}</div><div style="height:8px"></div>${SEG(['Aguardando peça','Aguardando cliente','Almoço','Outro'],0)}<div style="margin-top:6px;color:var(--mute)">Pausa de mais de 24 horas pede justificativa.</div></div><div>${X('Aprovado pelo cliente',T(['Item','Feito'],[['Pastilha de freio',CK('',true)],['Disco de freio (2)',CK('',true)],['Sistema de freios',CK('',false)]]))}${UI.extra==='1'?X('Item a mais',F('O que é','Fluido de freio DOT 4')+'<div style="height:6px"></div>'+R('end',BT('Cancelar',{set:'extra=0'}),BT('Avisar a recepção',{r:'MEC',set:'extra=0',c:'pri'}))+'<div style="color:var(--mute);margin-top:4px">O cliente precisa aprovar antes do uso.</div>'):BT('Achei algo a mais',{r:'MEC',set:'extra=1',c:'ghost'})}</div></div>`];
-  case 4:return['Etapa 5 · Liberação do checklist de entrega',lock+X('Conferência do chefe',T(['Item','Resultado'],[['Itens do orçamento','Todos executados ✓'],['Tempo apontado','3 h 52 min (previsto 3 h)'],['Teste final','Registrado ✓'],['Fotos finais','2']]))+NOTE('Só o chefe de oficina libera o checklist para a entrega.')+R('end',BT('Devolver ao mecânico',{r:'CHF',set:'STAGE=3'}),BT('Liberar checklist de entrega',{r:'CHF',set:'STAGE=5',c:'pri'}))];
-  case 5:return['Etapa 6 · Entrega do veículo',lock+`<div class="cols e"><div>${T(['Conferência','Entrada','Agora'],[['Km','148.230','148.262'],['Combustível','1/4','1/4'],['Avarias','2','2 (iguais)'],['Fotos','4','4']])}${CK('Conferi o veículo com o cliente',true)}${X('Garantia','Peças 90 dias · Serviço 6 meses')}</div><div>${RD('À vista ou PIX (5% de desconto)',true)}${RD('Cartão em até 4x',false)}<div style="height:6px"></div>${TOT('Total','R$ 1.240,00')+TOT('Desconto à vista','– R$ 62,00')+TOT('A receber','R$ 1.178,00','big')}${CK('Emitir nota fiscal',true)}${SIG('Assinatura do cliente na entrega',true)}</div></div>${R('end',BT('Entregar veículo',{r:'REC',set:'STAGE=6',c:'pri'}))}`];
+  case 4:return['Etapa 5 · Liberação do checklist de entrega',lock+X('Conferência do chefe',T(['Item','Resultado'],[['Itens do orçamento','Todos executados ✓'],['Tempo apontado','3 h 52 min (previsto 3 h)'],['Teste final','Registrado ✓'],['Fotos finais','2']]))+NOTE('Só o chefe de oficina libera o checklist para a entrega. Ao liberar, o cliente recebe automaticamente o aviso de veículo pronto no WhatsApp.')+R('end',BT('Devolver ao mecânico',{r:'CHF',set:'STAGE=3'}),BT('Liberar checklist de entrega',{r:'CHF',set:'STAGE=5',c:'pri'}))];
+  case 5:return['Etapa 6 · Entrega do veículo',lock+R('',CH('WhatsApp automático','ok'),'<span style="color:var(--mute)">Enviado quando o chefe liberou, às 16:20</span>')+'<div class="wapp" style="margin:6px 0 10px">Olá, João! Seu <b>Ford Pampa (LXN-4590)</b> está pronto para retirada. Atendemos até as 18h. Qualquer dúvida, é só responder esta mensagem.</div>'+`<div class="cols e"><div>${T(['Conferência','Entrada','Agora'],[['Km','148.230','148.262'],['Combustível','1/4','1/4'],['Avarias','2','2 (iguais)'],['Fotos','4','4']])}${CK('Conferi o veículo com o cliente',true)}${X('Garantia','Peças 90 dias · Serviço 6 meses')}</div><div>${RD('À vista ou PIX (5% de desconto)',true)}${RD('Cartão em até 4x',false)}<div style="height:6px"></div>${TOT('Total','R$ 1.240,00')+TOT('Desconto à vista','– R$ 62,00')+TOT('A receber','R$ 1.178,00','big')}${CK('Emitir nota fiscal',true)}${SIG('Assinatura do cliente na entrega',true)}</div></div>${R('end',BT('Entregar veículo',{r:'REC',set:'STAGE=6',c:'pri'}))}`];
   default:return['OS encerrada',NOTE('Veículo entregue em 12/10 às 17:10. A OS ficou registrada no histórico do veículo e do cliente.','ok')+R('end',B('Imprimir comprovante','','ghost'),B('Voltar ao quadro','quadro','pri'))];
   }
 }
@@ -395,15 +395,16 @@ D('os',{m:'op',n:'quadro',t:'OS: ficha única',r:'REC,MEC,PEC,CHF,DIR'},()=>{
   const cli=ROLE==='MEC'?'Cliente: J. Pereira':'João Pereira · (47) 99123-4567';
   return shell('OS-0187 · Ford Pampa · LXN-4590',
    `<div class="row sb" style="margin-bottom:8px"><div class="row">${CH(ST[STAGE],STK[STAGE])}<span>${cli}</span></div><span style="color:var(--mute)">Mecânico: ${STAGE===0&&UI.mec==='0'?'—':'Rafael'}</span></div>`+STEPS(COL,STAGE)+
-   `<div class="cols l">${X(ttl,body)}<div>${X('Entrada','148.230 km · 1/4 de tanque<br>Risco no para-choque diant. esq.; amassado na porta tras. dir.<br>Pedido: barulho ao frear, pedal baixo<div style="height:6px"></div>'+PH(2))}${STAGE>=1?X('Itens e valor',T(['Item','Qtd','Valor'],ITENS)+TOT('Total','R$ 1.240,00','big')):''}${X('Andamento',EV.slice(0,STAGE+1).map(e=>R('',`<b>${e[0]}</b><span>${e[1]}</span>`)).join(''))}</div></div>`);
+   `<div class="cols l">${X(ttl,body)}<div>${X('Mecânico',S('Mecânico responsável',STAGE===0&&UI.mec==='0'?'Não atribuído':'Rafael')+'<div style="color:var(--mute);margin-top:6px">Quem executa esta OS. O chefe de oficina pode trocar.</div>')}${X('Entrada','148.230 km · 1/4 de tanque<br>Risco no para-choque diant. esq.; amassado na porta tras. dir.<br>Pedido: barulho ao frear, pedal baixo<div style="height:6px"></div>'+PH(2))}${STAGE>=1?X('Itens e valor',T(['Item','Qtd','Valor'],ITENS)+TOT('Total','R$ 1.240,00','big')):''}${X('Andamento',EV.slice(0,STAGE+1).map(e=>R('',`<b>${e[0]}</b><span>${e[1]}</span>`)).join(''))}</div></div>`);
 });
 
 /* ============ 5. Agenda ============ */
 D('agenda',{m:'op',n:'agenda',t:'Agenda',r:'REC,DIR'},()=>{
   const free=`<span style="color:var(--mute)">livre</span>`,ag=BT('+ Agendar',{set:'agf=1',c:'ghost'});
   const rows=[['08:00','João Pereira · Ford Pampa','Freios',CH('Chegou','ok'),BT('Receber veículo',{go:'os-nova',r:'REC',c:'pri'})],['09:00',BK?'João Pereira · Ford Pampa':free,BK?'Freios':'',BK?CH('Confirmado','ok'):'',BK?'':ag],['10:00','Maria Souza · VW Gol','Revisão 30 mil',CH('Confirmado','ok'),''],['11:00',free,'','',ag],['13:00','Carlos Lima · Captiva','Luz do motor',CH('Aguardando resposta','warn'),''],['14:00',free,'','',ag],['16:00','Pedro Alves · Fiat Uno','Troca de óleo',CH('Confirmado','ok'),'']];
-  const right=UI.agf==='1'?X('Novo agendamento',G(1,S('Cliente','João Pereira'),S('Veículo','Ford Pampa · LXN-4590'),F('Data','13/10/2026'))+`<div class="f"><span>Horário livre</span>${SEG(['09:00','11:00','14:00'],0)}</div><div style="height:8px"></div>${TA('Motivo','Barulho ao frear.',40)}<div style="height:8px"></div><div class="wapp">Olá, João! Seu horário ficou para <b>13/10 às 09:00</b>. Para remarcar, avise com 2 horas de antecedência.</div>${R('end',BT('Cancelar',{set:'agf=0'}),BT('Agendar e avisar',{set:'agf=0',c:'pri'}))}`):X('WhatsApp automático','Confirmação ao agendar.<br>Lembrete 1 dia antes, com resposta 1 (confirmar) ou 2 (remarcar).')+X('Cancelar ou remarcar','Até 2 horas antes. Depois disso o horário é considerado perdido.');
-  return shell('Agenda',R('',SEG(['Seg 12/10','Ter 13/10','Qua 14/10','Qui 15/10','Sex 16/10','Sáb 17/10'],0))+'<div style="height:8px"></div>'+`<div class="cols l">${X('',T(['Hora','Cliente · veículo','Serviço','Situação',''],rows))}<div>${right}</div></div>`,{right:BT('+ Agendar',{set:'agf=1',c:'pri'})});
+  const form=UI.agf==='1'?X('Novo agendamento',CV(UI.nv==='1',false)+G(2,F('Data','13/10/2026'),F('Serviço','Freios'))+`<div class="f"><span>Horário livre</span>${SEG(['09:00','11:00','14:00'],0)}</div><div style="height:8px"></div>${TA('Motivo','Barulho ao frear.',40)}<div style="height:8px"></div><div class="wapp">Olá, João! Seu horário ficou para <b>13/10 às 09:00</b>. Para remarcar, avise com 2 horas de antecedência.</div>${R('end',BT('Cancelar',{set:'agf=0;nv=0'}),BT('Agendar e avisar',{set:'agf=0;nv=0',c:'pri'}))}`):'';
+  const right=X('WhatsApp automático','Confirmação ao agendar.<br>Lembrete 1 dia antes, com resposta 1 (confirmar) ou 2 (remarcar).<br>Aviso de veículo pronto assim que o chefe libera a OS.')+X('Cancelar ou remarcar','Até 2 horas antes. Depois disso o horário é considerado perdido.');
+  return shell('Agenda',R('',SEG(['Seg 12/10','Ter 13/10','Qua 14/10','Qui 15/10','Sex 16/10','Sáb 17/10'],0))+'<div style="height:8px"></div>'+`<div class="cols l">${X('',T(['Hora','Cliente · veículo','Serviço','Situação',''],rows))}<div>${right}</div></div>${form}`,{right:BT('+ Agendar',{set:'agf=1',c:'pri'})});
 });
 
 /* ============ 6. Contatos (clientes e fornecedores) ============ */
@@ -416,10 +417,11 @@ D('contatos',{m:'cad',n:'contatos',t:'Cliente / Fornecedor',r:'REC,PEC,DIR'},()=
   const cur=CT[sel>=0?sel:0];
   const isF=cur[1]==='Fornecedor';
   let panel;
-  if(UI.cont==='novo'){panel=X('Novo cadastro',`<div class="row">${CK('Cliente',true)}${CK('Fornecedor',false)}</div><div style="color:var(--mute);margin-bottom:6px">Pode marcar os dois: é um cadastro só.</div>${G(1,F('Nome / razão social'),F('CPF / CNPJ'),F('Telefone (WhatsApp)'),F('E-mail'),F('Endereço'))}${X('Veículo do cliente (opcional)',G(2,F('Placa'),F('Marca'),F('Modelo'),F('Ano'),F('Motorização'),F('Chassi')))}${CK('Dados usados só para o serviço (LGPD)',true)}${R('end',BT('Cancelar',{set:'cont=0'}),BT('Salvar',{set:'cont=0',c:'pri'}))}`)}
-  else if(isF){panel=X(cur[0],`<div class="row" style="margin-bottom:8px">${CH('Fornecedor','warn')}<span style="color:var(--mute)">${cur[4]} · ${cur[2]}</span></div>${T(['Peça','Último preço','Última compra'],[['Pastilha de freio','R$ 205,00','05/10'],['Disco de freio','R$ 238,00','05/10']])}${R('',BT('Entrada de peças',{go:'estoque',set:'est=entrada',r:'PEC,DIR',c:'pri'}),BT('Pedir preço',{go:'estoque',set:'est=preco',r:'PEC,DIR',c:'ghost'}),BT('Editar',{set:'cont=novo',c:'ghost'}))}`)}
-  else{panel=X(cur[0],`<div class="row" style="margin-bottom:8px">${tipo(cur[1])}<span style="color:var(--mute)">${cur[2]} · ${cur[3]}</span></div>${T(['Placa','Veículo','OS aberta'],[['LXN-4590','Ford Pampa 1995',sel===0&&STAGE<6?CH(ST[STAGE],STK[STAGE]):'—'],['MAB-1C23','VW Gol 2015','—']])}${T(['OS','Data','Serviço','Valor'],[['OS-0141','03/06/2026','Troca de correia','R$ 890,00'],['OS-0098','21/02/2026','Revisão 30 mil','R$ 560,00']])}${R('',BT('Nova OS',{go:'os-nova',r:'REC',c:'pri'}),BT('+ Veículo',{set:'cont=novo',c:'ghost'}),BT('Editar',{set:'cont=novo',c:'ghost'}))}`)}
-  return shell('Cliente / Fornecedor',(onlyCli?'':SEGS([['Todos','all'],['Clientes','cli'],['Fornecedores','forn']],'cf'))+'<div style="height:8px"></div>'+`<div class="cols e"><div>${BAR('nome, telefone, CPF/CNPJ ou placa',BT('+ Novo',{set:'cont=novo',c:'pri'}))}${T(['Nome','Tipo','Telefone'],vis.map(({c,i})=>[(i===sel?'▸ ':'')+c[0],tipo(c[1]),c[2]]),null,k=>`data-set="cont=${vis[k].i}" ${vis[k].i===sel?'class="sel"':''}`)}</div><div>${panel}</div></div>`);
+  if(UI.cont==='veic'){panel=X('Novo veículo para o cliente',CV(true,false)+R('end',BT('Cancelar',{set:'cont=0;nv=0'}),BT('Salvar',{set:'cont=0;nv=0',r:'REC',c:'pri'})))}
+  else if(UI.cont==='novo'){const ty=can('REC')&&can('PEC')?UI.ct:(can('REC')?'cli':'forn');panel=X(ty==='cli'?'Novo cliente':'Novo fornecedor',(can('REC')&&can('PEC')?SEGS([['Cliente','cli'],['Fornecedor','forn']],'ct')+'<div style="height:8px"></div>':'')+(ty==='cli'?CV(UI.nv==='1',true):G(2,F('Razão social'),F('CNPJ'),F('Telefone / WhatsApp'),F('E-mail'),F('Contato'),F('Categoria (ex.: autopeças)'))+F('Endereço'))+'<div style="height:8px"></div>'+CK('Dados usados só para o serviço (LGPD)',true)+R('end',BT('Cancelar',{set:'cont=0;nv=0'}),BT('Salvar',{set:'cont=0;nv=0',c:'pri'})))}
+  else if(isF){panel=X(cur[0],`<div class="row" style="margin-bottom:8px">${CH('Fornecedor','warn')}<span style="color:var(--mute)">${cur[4]} · ${cur[2]}</span></div>${T(['Peça','Último preço','Última compra'],[['Pastilha de freio','R$ 205,00','05/10'],['Disco de freio','R$ 238,00','05/10']])}${R('',BT('Entrada de peças',{go:'estoque',set:'est=entrada',r:'PEC,DIR',c:'pri'}),BT('Pedir preço',{go:'estoque',set:'est=preco',r:'PEC,DIR',c:'ghost'}),BT('Editar',{set:'cont=novo;ct=forn',r:'PEC',c:'ghost'}))}`)}
+  else{panel=X(cur[0],`<div class="row" style="margin-bottom:8px">${tipo(cur[1])}<span style="color:var(--mute)">${cur[2]} · ${cur[3]}</span></div>${T(['Placa','Veículo','OS aberta'],[['LXN-4590','Ford Pampa 1995',sel===0&&STAGE<6?CH(ST[STAGE],STK[STAGE]):'—'],['MAB-1C23','VW Gol 2015','—']])}${T(['OS','Data','Serviço','Valor'],[['OS-0141','03/06/2026','Troca de correia','R$ 890,00'],['OS-0098','21/02/2026','Revisão 30 mil','R$ 560,00']])}${R('',BT('Nova OS',{go:'os-nova',r:'REC',c:'pri'}),BT('+ Veículo',{set:'cont=veic;nv=1',r:'REC',c:'ghost'}),BT('Editar',{set:'cont=novo;ct=cli',r:'REC',c:'ghost'}))}`)}
+  return shell('Cliente / Fornecedor',(onlyCli?'':SEGS([['Todos','all'],['Clientes','cli'],['Fornecedores','forn']],'cf'))+'<div style="height:8px"></div>'+(UI.cont==='novo'||UI.cont==='veic'?panel:`<div class="cols e"><div>${BAR('nome, telefone, CPF/CNPJ ou placa',BT('+ Novo',{set:'cont=novo',r:'REC,PEC',c:'pri'}))}${T(['Nome','Tipo','Telefone'],vis.map(({c,i})=>[(i===sel?'▸ ':'')+c[0],tipo(c[1]),c[2]]),null,k=>`data-set="cont=${vis[k].i}" ${vis[k].i===sel?'class="sel"':''}`)}</div><div>${panel}</div></div>`));
 });
 
 /* ============ 7. Estoque ============ */
@@ -432,15 +434,6 @@ D('estoque',{m:'cad',n:'estoque',t:'Estoque',r:'PEC,DIR'},()=>{
   return shell('Estoque',NOTE((DISCO<4?3:2)+' peças abaixo do mínimo.','bad')+BAR('código ou nome da peça',BT('Pedir preço',{set:'est=preco',r:adm,c:'ghost'}),BT('Entrada de peças',{set:'est=entrada',r:adm}),BT('+ Peça',{set:'est=peca',r:adm,c:'pri'}))+T(['Código','Peça','Em estoque','Mínimo','Reservado','Preço','Fornecedor'],[['P-0101','Pastilha de freio dianteira','6','4',STAGE>=3?'0':'1','R$ 210,00','Auto Peças Brusque'],['P-0102','Disco de freio',DISCO<4?CH(DISCO,'bad'):String(DISCO),'4',STAGE>=3?'0':'2','R$ 240,00','Auto Peças Brusque'],['P-0230','Óleo 5W30 (litro)',CH('3','bad'),'10','0','R$ 48,00','Distribuidora Vale'],['P-0310','Filtro de óleo','12','6','2','R$ 32,00','Distribuidora Vale'],...NP])+panel);
 });
 
-/* ============ 8. Fila e liberação (chefe) ============ */
-D('fila',{m:'ges',n:'fila',t:'Fila de serviços e liberação',r:'CHF,DIR'},()=>{
-  const sel=n=>`<select class="in">${['Rafael','Diego','Marcos'].map(o=>`<option ${o===n?'selected':''}>${o}</option>`).join('')}</select>`,ar=`<span class="arrows"><span>▲</span><span>▼</span></span>`;
-  const rows=[['1','OS-0183','Suspensão','4,0 h',sel('Rafael'),ar]];
-  if(STAGE===3)rows.push(['2','OS-0187','Freios','3,0 h',sel('Rafael'),ar]);
-  rows.push([String(rows.length+1),'OS-0185','Embreagem','3,5 h',sel('Diego'),ar],[String(rows.length+2),'OS-0190','Correia','2,0 h',sel('Marcos'),ar]);
-  return shell('Fila de serviços e liberação',
-   `<div class="cols e">${X('Fila de serviços aprovados',T(['#','OS','Serviço','Previsto','Mecânico','Ordem'],rows)+R('end',BT('Salvar sequência',{r:'CHF',c:'pri'})))}${X('Aguardando liberação do checklist',STAGE===4?CARD('OS-0187 · Ford Pampa','Serviço concluído · 3 h 52 min')+R('end',BT('Abrir OS',{go:'os',c:'ghost'}),BT('Liberar checklist',{r:'CHF',set:'STAGE=5',c:'pri'})):'<span style="color:var(--mute)">Nenhum serviço aguardando.</span>')}</div>`+(ROLE==='DIR'?NOTE('Diretor acompanha. Só o chefe de oficina altera a sequência e libera o checklist.'):''));
-});
 
 /* ============ 9. Pessoas e acessos ============ */
 D('pessoas',{m:'ges',n:'pessoas',t:'Pessoas e acessos',r:'CHF,DIR'},()=>{
@@ -466,7 +459,7 @@ function applySet(str){str.split(';').forEach(p=>{const [k,v]=p.split('=');if(k=
 function paintProto(){
   const s=byId(cur),html=renderScreen(s),i=SCR.indexOf(s);
   let idx='',last='';
-  SCR.filter(x=>!onlyRole||x.r.includes(ROLE)||x.id===cur).forEach(x=>{if(x.m!==last){idx+=`<h3>${MODS[x.m]}</h3>`;last=x.m}idx+=`<button data-go="${x.id}" ${x.id===cur?'aria-current="true"':''}>${x.t}</button>`});
+  SCR.filter(x=>!onlyRole||ROLE==='ALL'||x.r.includes(ROLE)||x.id===cur).forEach(x=>{if(x.m!==last){idx+=`<h3>${MODS[x.m]}</h3>`;last=x.m}idx+=`<button data-go="${x.id}" ${x.id===cur?'aria-current="true"':''}>${x.t}</button>`});
   app.innerHTML=`<div class="layout"><aside class="index" aria-label="Telas"><label class="only"><input type="checkbox" id="only" ${onlyRole?'checked':''}> Só telas do perfil ${ROLES[ROLE]}</label><div class="stg">OS-0187 agora: <b>${ST[STAGE]}</b><br><button class="demo" data-reset="1">reiniciar demonstração</button></div>${idx}</aside><div><div class="stage" id="stage">${html}</div><div class="info"><div class="pn"><button data-step="-1" ${i===0?'disabled':''}>◀ Anterior</button><button data-step="1" ${i===SCR.length-1?'disabled':''}>Próxima ▶</button><span style="color:var(--mute);align-self:center">${i+1} / ${SCR.length}</span></div></div></div></div>`;
 }
 function paintBoard(){
@@ -487,15 +480,15 @@ const TOUR=[['login','REC',0,''],['quadro','REC',0,''],['agenda','REC',0,''],['a
 ['quadro','MEC',0,''],['os','MEC',0,'mec=1'],
 ['quadro','PEC',1,''],['os','PEC',1,''],['os','REC',2,''],
 ['quadro','MEC',3,''],['os','MEC',3,''],
-['os','CHF',4,''],['fila','CHF',4,''],
+['os','CHF',4,''],
 ['os','REC',5,''],['quadro','REC',6,''],
 ['estoque','PEC',6,''],['estoque','PEC',6,'est=entrada'],['contatos','PEC',6,'cont=5'],
 ['pessoas','CHF',6,'pf=1'],['relatorios','CHF',6,''],['pessoas','DIR',6,'pf=1'],['relatorios','DIR',6,'rel=geral']];
 let pres=false,ti=0;
-const same=i=>TOUR[i]&&TOUR[i][0]===cur&&TOUR[i][1]===ROLE&&TOUR[i][2]===STAGE;
-const tix=()=>same(ti)?ti:TOUR.findIndex(t=>t[0]===cur&&t[1]===ROLE&&t[2]===STAGE);
+const same=i=>TOUR[i]&&TOUR[i][0]===cur&&(ROLE==='ALL'||TOUR[i][1]===ROLE)&&TOUR[i][2]===STAGE;
+const tix=()=>same(ti)?ti:TOUR.findIndex(t=>t[0]===cur&&(ROLE==='ALL'||t[1]===ROLE)&&t[2]===STAGE);
 function fit(){const w=document.querySelector('#stage .wf');if(!pres||!w)return;w.style.zoom=1;w.style.zoom=Math.min((innerWidth-24)/w.offsetWidth,(innerHeight-76)/w.offsetHeight,1.8)}
-function loadStep(i){const t=TOUR[i];ti=i;ROLE=t[1];STAGE=t[2];UI={...UI0};if(t[3])applySet(t[3]);sel.value=ROLE;go(t[0])}
+function loadStep(i){const t=TOUR[i];ti=i;if(ROLE!=='ALL')ROLE=t[1];STAGE=t[2];UI={...UI0};if(t[3])applySet(t[3]);sel.value=ROLE;go(t[0])}
 function tour(d){let i=tix();if(i<0)i=ti;loadStep(Math.max(0,Math.min(TOUR.length-1,i+d)))}
 function setPres(on){pres=on;document.body.classList.toggle('pres',on);
   if(on){view='proto';try{document.documentElement.requestFullscreen&&document.documentElement.requestFullscreen().catch(()=>{})}catch(e){}loadStep(0)}
@@ -509,18 +502,18 @@ const $st=()=>document.getElementById('stage');
 let tt;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),2200)}
 const fmt=s=>[s/3600|0,(s/60|0)%60,s%60].map(n=>String(n).padStart(2,'0')).join(':');
 setInterval(()=>{if(RUN)TM++;const e=document.querySelector('.timer');if(e)e.textContent=fmt(TM)},1000);
-const MSG={'Buscar':'Placa encontrada no cadastro','Salvar sequência':'Sequência da fila salva','Imprimir comprovante':'Comprovante enviado para impressão','Esqueci minha senha':'Link de redefinição enviado ao e-mail','Enviar por WhatsApp':'Orçamento enviado ao cliente pelo WhatsApp','Agendar e avisar':'Agendado · confirmação enviada no WhatsApp','Enviar':'Pedido de preço enviado ao fornecedor','Confirmar entrada':'Entrada registrada · estoque atualizado','Aprovar e liberar':'Peças reservadas e serviço na fila do mecânico','Liberar checklist de entrega':'Checklist liberado para a recepção','Entregar veículo':'Veículo entregue · OS encerrada','Avisar a recepção':'Recepção avisada · o cliente precisa aprovar','Abrir OS':'OS-0187 aberta','Salvar':'Salvo','Cadastrar':'Administrador cadastrado · agora é só entrar'};
+const MSG={'Buscar':'Placa encontrada no cadastro','Imprimir comprovante':'Comprovante enviado para impressão','Esqueci minha senha':'Link de redefinição enviado ao e-mail','Enviar por WhatsApp':'Orçamento enviado ao cliente pelo WhatsApp','Agendar e avisar':'Agendado · confirmação enviada no WhatsApp','Enviar':'Pedido de preço enviado ao fornecedor','Confirmar entrada':'Entrada registrada · estoque atualizado','Aprovar e liberar':'Peças reservadas e serviço na fila do mecânico','Liberar checklist de entrega':'Veículo pronto · cliente avisado por WhatsApp','Entregar veículo':'Veículo entregue · OS encerrada','Avisar a recepção':'Recepção avisada · o cliente precisa aprovar','Abrir OS':'OS-0187 aberta','Salvar':'Salvo','Cadastrar':'Administrador cadastrado · agora é só entrar'};
 function pre(l){const st=$st(),ins=[...st.querySelectorAll('.box input.in')].map(i=>i.value.trim()),sl=[...st.querySelectorAll('.box select')].map(s=>s.value);
  if(l==='Agendar e avisar')BK=true;
  if(l==='Cadastrar')FIRST=false;
  if(l==='Confirmar entrada')DISCO+=4;
- if(l==='Salvar'&&cur==='contatos'&&UI.cont==='novo'&&ins[0]){const t=[...st.querySelectorAll('.box .ck')].slice(0,2).filter(c=>c.classList.contains('on')).map(c=>c.textContent.trim()).join('+')||'Cliente';CT.push([ins[0],t,ins[2]||'(47) 99000-0000','Brusque',t==='Fornecedor'?'Novo fornecedor':'Novo cadastro'])}
+ if(l==='Salvar'&&cur==='contatos'&&UI.cont==='novo'){if(!ins[0]){toast('Informe o nome do cadastro');return false}const t=(can('REC')&&can('PEC')?UI.ct==='forn':!can('REC'))?'Fornecedor':'Cliente';CT.push([ins[0],t,ins[2]||'(47) 99000-0000','Brusque',t==='Fornecedor'?'Novo fornecedor':'Novo cadastro'])}
  if(l==='Salvar'&&cur==='estoque'&&UI.est==='peca')NP.push([ins[0]||'P-0999',ins[1]||'Nova peça','0',ins[3]||'0','0',ins[4]||'R$ 0,00',sl[1]||'—']);
  if(l==='Salvar'&&cur==='pessoas'&&UI.pf==='1'&&ins[0])PP.push([ins[0],sl[0]||ins[2]||'Mecânico',CH('Aguardando 1º acesso','warn')]);
  if(MSG[l])toast(MSG[l])}
 function extra(e){const t=e.target;
  const sg=t.closest('.sig');if(sg){const v=sg.querySelector('svg');if(v)v.remove();else sg.insertAdjacentHTML('afterbegin','<svg viewBox="0 0 400 96" preserveAspectRatio="none"><path d="M40 60 C70 10 90 90 120 40 S170 20 200 58 S260 30 300 50 S340 40 360 30" fill="none" stroke="currentColor" stroke-width="2"/></svg>');return true}
- const ad=t.closest('.ph .add');if(ad){ad.insertAdjacentHTML('beforebegin','<div class="px"><span>foto '+(ad.parentElement.querySelectorAll('.px').length+1)+'</span></div>');return true}
+ const ad=t.closest('.ph .add');if(ad)return false;
  const ar=t.closest('.arrows span');if(ar){const tr=ar.closest('tr'),up=ar.textContent==='▲',o=up?tr.previousElementSibling:tr.nextElementSibling;if(o){up?tr.parentNode.insertBefore(tr,o):tr.parentNode.insertBefore(o,tr);[...tr.parentNode.rows].forEach((r,i)=>r.cells[0].textContent=i+1)}return true}
  const sp=t.closest('.seg span:not([data-set])');if(sp){sp.parentElement.querySelectorAll('span').forEach(x=>x.classList.toggle('on',x===sp));return true}
  const ck=t.closest('.ck');if(ck){if(ck.classList.contains('rd')){const bx=ck.closest('.box')||ck.parentElement;bx.querySelectorAll('.ck.rd').forEach(x=>x.classList.toggle('on',x===ck))}else ck.classList.toggle('on');return true}
@@ -530,8 +523,14 @@ function extra(e){const t=e.target;
  if(l==='Pausar'||l==='Retomar'){RUN=!RUN;toast(RUN?'Cronômetro retomado':'Cronômetro pausado');paint();return true}
  if(!bt.dataset.set&&/^\+ (Peça|Serviço)/.test(l)){const tb=bt.parentElement.previousElementSibling;if(tb&&tb.tagName==='TABLE'){const n=tb.tHead.rows[0].cells.length,c=l.includes('Peça')?['Peça','Fluido de freio DOT 4','1','R$ 58,00',CH('6 em estoque','ok')]:['Serviço','Alinhamento','1,0 h','R$ 120,00','—'];tb.tBodies[0].insertAdjacentHTML('beforeend','<tr>'+c.slice(0,n).map(x=>'<td>'+x+'</td>').join('')+'</tr>');toast('Item adicionado')}return true}
  if(!bt.dataset.go&&!bt.dataset.set&&!bt.dataset.reset){toast(MSG[l]||l+' · feito');return true}
- pre(l);return false}
+ return pre(l)===false}
 document.addEventListener('input',e=>{const q=e.target.closest('[data-q]');if(!q)return;const tb=q.closest('.bar').nextElementSibling;if(tb&&tb.tBodies&&tb.tBodies[0])[...tb.tBodies[0].rows].forEach(r=>{r.style.display=r.textContent.toLowerCase().includes(q.value.toLowerCase())?'':'none'})});
+document.addEventListener('change',e=>{const i=e.target.closest&&e.target.closest('.ph input[type=file]');if(!i)return;const add=i.closest('.ph').querySelector('.add');[...i.files].forEach(f=>{add.insertAdjacentHTML('beforebegin','<div class="px" style="background:url('+URL.createObjectURL(f)+') center/cover"></div>')});i.value=''});
+document.addEventListener('input',e=>{const i=e.target;if(!i.matches||!i.matches('input.in'))return;const l=(i.closest('.f')&&i.closest('.f').querySelector('span')?i.closest('.f').querySelector('span').textContent:''),d=i.value.replace(/\D/g,'');let v;
+ if(/Telefone/.test(l)){const n=d.slice(0,11),k=n.length>10?7:6;v=n.length>6?'('+n.slice(0,2)+') '+n.slice(2,k)+'-'+n.slice(k):n.length>2?'('+n.slice(0,2)+') '+n.slice(2):n}
+ else if(/CPF|CNPJ/.test(l)){const n=d.slice(0,14);v=n.length>11?n.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{0,2})/,'$1.$2.$3/$4-$5'):n.replace(/(\d{3})(\d{0,3})(\d{0,3})(\d{0,2})/,(m,a,b,c,x)=>a+(b?'.'+b:'')+(c?'.'+c:'')+(x?'-'+x:''))}
+ else if(/^Placa/.test(l))v=i.value.toUpperCase().slice(0,8);
+ else return;i.value=v.replace(/[-./ ]+$/,'')});
 const sel=document.getElementById('role');
 document.addEventListener('click',e=>{
   if(extra(e))return;
@@ -545,7 +544,7 @@ document.addEventListener('click',e=>{
   const st=e.target.closest('[data-step]');if(st){const i=SCR.indexOf(byId(cur))+Number(st.dataset.step);if(SCR[i])go(SCR[i].id)}
 });
 sel.innerHTML=Object.entries(ROLES).map(([k,v])=>`<option value="${k}">${v}</option>`).join('');
-sel.addEventListener('change',()=>{ROLE=sel.value;UI={...UI0};if(view==='proto'){go(byId(cur).r.includes(ROLE)?cur:'quadro')}else paint()});
+sel.addEventListener('change',()=>{ROLE=sel.value;UI={...UI0};if(view==='proto'){go(ROLE==='ALL'||byId(cur).r.includes(ROLE)?cur:'quadro')}else paint()});
 document.addEventListener('change',e=>{if(e.target.id==='only'){onlyRole=e.target.checked;paint()}});
 try{const h=location.hash.slice(1);if(h&&byId(h))cur=h}catch(e){}
 paint();
